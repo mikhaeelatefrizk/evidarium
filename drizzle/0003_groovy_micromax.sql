@@ -1,0 +1,1 @@
+ALTER TABLE `projects` ADD `allow_search` integer DEFAULT 1 NOT NULL;

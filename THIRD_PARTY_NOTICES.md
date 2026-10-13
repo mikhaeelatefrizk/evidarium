@@ -1,0 +1,30 @@
+# Third-party components
+
+Original Evidarium code is MIT licensed. This does not change any third-party code, model, data, article, or service terms. Dependencies are installed separately through the lockfiles/requirements; model weights and article text are not bundled. The Sites/Vinext starter notices remain under `build/` where supplied.
+
+| Component | Code license / separate terms | Primary source |
+|---|---|---|
+| INDRA | BSD-2-Clause | https://github.com/gyorilab/indra |
+| Biomni | Apache-2.0; model/data terms separate | https://github.com/snap-stanford/Biomni |
+| PySR | Apache-2.0; Julia dependencies retain their licenses | https://github.com/astroautomata/PySR |
+| metafor | GPL-2-or-later; separately installed R program | https://cran.r-project.org/package=metafor |
+| PaperQA2 | Apache-2.0; model terms separate | https://github.com/Future-House/paper-qa |
+| OpenScholar | Apache-2.0 code; underlying Llama/other model terms separate | https://github.com/AkariAsai/OpenScholar |
+| ASReview | Apache-2.0 | https://github.com/asreview/asreview |
+| Docling | MIT code; model/data licenses separate | https://github.com/docling-project/docling |
+| React | MIT | https://github.com/facebook/react |
+| Lucide | ISC | https://github.com/lucide-icons/lucide |
+| NumPy / SciPy | BSD-3-Clause | https://numpy.org / https://scipy.org |
+| pypdf | BSD-3-Clause | https://github.com/py-pdf/pypdf |
+| python-docx / openpyxl | MIT | https://python-docx.readthedocs.io / https://openpyxl.readthedocs.io |
+
+Before distributing a combined binary, image, modified GPL component, or model, review the actual installed components and applicable redistribution obligations. Invoking an optional adapter is not permission to redistribute its dependencies or the user's research content.
+
+OpenAI's ChatGPT plan integration is subject to the provider's current eligibility, scope, usage, and deployment rules:
+
+- https://developers.openai.com/siwc/token-sharing-open-source
+- https://developers.openai.com/siwc/token-sharing-open-source/sign-in
+- https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference
+- https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations
+
+Literature metadata is retrieved from PubMed/NCBI E-utilities and Crossref REST. Availability, rate limits, licenses, and rights to full-text content remain with their providers and publishers. A DOI or open-access marker is not a blanket license to redistribute an article.
