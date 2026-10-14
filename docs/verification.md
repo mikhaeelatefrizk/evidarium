@@ -1,6 +1,6 @@
 # Current verification — 0.4.0
 
-See [release 0.4](release-0.4.md) for native hosted analysis, 20 independently executed R/metafor numerical comparisons, PDF coverage checks and the public deployed-server reference check. The current JavaScript suite passes 43 checks with a configured test Python and zero skips; TypeScript passed. Live subscription inference and full browser/researcher validation remain unverified.
+See [release 0.4](release-0.4.md) for native hosted analysis, 20 independently executed R/metafor numerical comparisons, PDF coverage checks and the public deployed-server reference check. The current JavaScript suite passes 43 checks with a configured test Python and zero skips; TypeScript passed. All four jobs in [the v0.4 CI run](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38557900671) passed, including 13 Python checks, real launchers and the scientific/Docker job. The [actual hosted reference report](validation/hosted-0.4.json) records HTTP-verified deployed calculations and PDF parsing through documented service access. Live subscription inference and full browser/researcher validation remain unverified.
 
 The previous record follows for historical engine and platform evidence.
 

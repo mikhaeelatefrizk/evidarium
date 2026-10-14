@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "engine_version": "0.4.0",
+  "execution": "hosted_native",
+  "executed_at": "2026-10-14T11:42:29.299Z",
+  "elapsed_ms": 0,
+  "scope": "Actual calculations and PDF parsing on fixed public reference data. Does not test sign-in, private storage, browser interaction, AI, or scientific suitability of your own data.",
+  "checks": [
+    {
+      "name": "Known CSV values 2, 4, 6",
+      "passed": true,
+      "actual": {
+        "rows": 3,
+        "missing_or_empty": 0,
+        "finite_numeric": 3,
+        "non_numeric_nonempty": 0,
+        "mean": 4,
+        "sd": 2,
+        "min": 2,
+        "max": 6,
+        "median": 4
+      },
+      "reference": {
+        "mean": 4,
+        "sample_sd": 2,
+        "median": 4
+      }
+    },
+    {
+      "name": "13-study published BCG meta-analysis",
+      "passed": true,
+      "actual": {
+        "estimate": -0.7145323426329154,
+        "se": 0.18079174420194327,
+        "ci_lower": -1.108443709145613,
+        "ci_upper": -0.32062097612021784,
+        "tau2": 0.31324326332596125,
+        "I2": 92.22138464011262,
+        "QE": 152.23300808237343,
+        "p_value": 0.001920015095210016
+      },
+      "reference": {
+        "name": "published-bcg",
+        "estimate": -0.7145323421581758,
+        "se": 0.1807917440928564,
+        "ci_lower": -1.1084437136856058,
+        "ci_upper": -0.3206209706307459,
+        "tau2": 0.31324325813688436,
+        "I2": 92.22138452127818,
+        "QE": 152.23300808237343,
+        "p_value": 0.0019200150960572396
+      },
+      "absolute_errors": {
+        "estimate": 4.747395809800992e-10,
+        "se": 1.0908687841926223e-10,
+        "ci_lower": 4.539992826124717e-09,
+        "ci_upper": 5.489471932573764e-09,
+        "tau2": 5.189076890399491e-09,
+        "I2": 1.1883443562510365e-07,
+        "QE": 0,
+        "p_value": 8.472235499962233e-13
+      },
+      "source": "https://wviechtb.github.io/metafor/"
+    },
+    {
+      "name": "Generated two-page PDF",
+      "passed": true,
+      "actual": {
+        "pages": 2,
+        "characters": 126,
+        "method": "PDF.js 6.1.200 via unpdf 1.8.1"
+      }
+    }
+  ]
+}
