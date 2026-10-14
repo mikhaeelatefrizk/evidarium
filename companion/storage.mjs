@@ -11,7 +11,7 @@ export function createDB(filename,migrations){
  for(const name of readdirSync(migrations).filter(n=>n.endsWith('.sql')).sort())if(!sql.prepare('SELECT name FROM _migrations WHERE name=?').get(name)){
   sql.exec('BEGIN');try{sql.exec(readFileSync(path.join(migrations,name),'utf8'));sql.prepare('INSERT INTO _migrations VALUES (?)').run(name);sql.exec('COMMIT')}catch(e){sql.exec('ROLLBACK');throw e}
  }
- return {raw:sql,prepare(query){let args=[];const s=sql.prepare(query);return {bind(...values){args=values;return this},async all(){return {results:s.all(...args)}},async first(){return s.get(...args)||null},async run(){const r=s.run(...args);return {success:true,meta:{changes:Number(r.changes)}}}}},close(){sql.close()}};
+ return {raw:sql,prepare(query){let args=[];const s=sql.prepare(query);return {bind(...values){args=values;return this},async all(){return {results:s.all(...args)}},async first(){return s.get(...args)||null},_execute(){const r=s.run(...args);return {success:true,meta:{changes:Number(r.changes)}}},async run(){return this._execute()}}},async batch(statements){sql.exec('BEGIN');try{const results=statements.map(s=>s._execute());sql.exec('COMMIT');return results}catch(e){sql.exec('ROLLBACK');throw e}},close(){sql.close()}};
 }
 export async function sha256File(file){const hash=createHash('sha256');for await(const chunk of createReadStream(file))hash.update(chunk);return hash.digest('hex')}
 export function createBucket(root){

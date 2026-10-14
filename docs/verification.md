@@ -1,18 +1,26 @@
 # Release verification record
 
-Release: **0.1.0**, 13 October 2026. This is a bounded engineering verification record, not scientific validation or a security certification.
+Release: **0.2.0**, 14 October 2026. This is a bounded engineering verification record, not scientific validation or a security certification.
 
 ## Checks completed
 
 | Check | Result | What it establishes |
 |---|---|---|
-| JavaScript HTTP core and local runtime suite | **13 passed, 0 skipped** | Ownership isolation; foreign-origin rejection; DOI deduplication; exclusion reasons; multipart integrity; export/import; provider failure handling; bounded retrieval; honest hosted inference rejection; explicit task approval and preserved failure; exact-passage receipt checks; external-search restriction |
+| JavaScript HTTP core and local runtime suite | **24 passed, 0 skipped** | Ownership isolation; foreign-origin rejection; DOI deduplication; exclusion reasons; multipart integrity; export/import; provider failure handling; bounded retrieval; honest hosted inference rejection; explicit task approval and preserved failure; exact-passage receipt checks; external-search restriction |
 | Python unit suite | **9 passed** | Hand-computed CSV result; actual text extraction; unknown-engine and row-limit errors; SSE parser; valid signed ID tokens; issuer/audience/expiry/nonce rejection; plaintext credential-store rejection |
-| Real worker subprocess | **Passed**, included in the 13 checks above | Production JSON-lines protocol calculates the mean 4 and sample SD 2 for values 2, 4, 6, returning execution provenance |
+| Real worker subprocess | **Passed**, included in the 24 checks above | Production JSON-lines protocol calculates the mean 4 and sample SD 2 for values 2, 4, 6, returning execution provenance |
 | TypeScript | **Passed** | Application type compilation, not runtime correctness |
 | Local Vite build | **Passed** | Production frontend can be bundled |
 
 The observed test environment used Node.js 24.19 and Python 3.12.14 on Linux. The application targets Node.js 22.13+ and Python 3.11+, but minimum-version and cross-platform testing remain outstanding. Tests use temporary databases and files. Model credentials and paid calls are not used.
+
+## Added verification in 0.2
+
+Eleven new tests cover JATS text/identity/license extraction, malformed and external-entity XML rejection, bounded responses, actual provider-field mapping, original-byte preservation, idempotent import, identifier mismatch, project isolation, retrieval beyond 2,000 turns, late-text retrieval, index updates/deletes/backfill, citation access states, message pagination/full export, and a controlled local model-completion citation audit. The controlled model test is not live model inference.
+
+A live Europe PMC metadata → XML → extraction → indexed retrieval check passed for `PMC3812051`: 18,297 extracted characters and five matching passages for “version control.” See [release record](release-0.2.md). This ran in the development environment, not through a production browser.
+
+A cleanly extracted local ZIP also passed runtime-import, migration, and bootstrap checks without using the development checkout’s Node dependencies. Bundled license notices were verified.
 
 ## Publication gates
 

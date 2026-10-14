@@ -28,3 +28,7 @@ OpenAI's ChatGPT plan integration is subject to the provider's current eligibili
 - https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations
 
 Literature metadata is retrieved from PubMed/NCBI E-utilities and Crossref REST. Availability, rate limits, licenses, and rights to full-text content remain with their providers and publishers. A DOI or open-access marker is not a blanket license to redistribute an article.
+
+## Bundled local XML reader
+
+The local release includes `saxes` 6.0.0 (ISC) and `xmlchars` 2.2.0 (MIT). Their package license files are included alongside the bundled runtime code. Saxes upstream is archived; dependency maintenance remains an explicit project responsibility. [Saxes](https://github.com/lddubeau/saxes) · [xmlchars](https://github.com/lddubeau/xmlchars).

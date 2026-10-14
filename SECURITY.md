@@ -37,3 +37,9 @@ File-format parsers may have their own vulnerabilities. Uploaded files are not a
 For a public deployment, the owner should configure a private security-reporting channel in the repository before inviting sensitive research use. Do not post credentials, private documents, or an exploitable vulnerability in a public issue. This source does not invent a support address or claim a staffed security team exists.
 
 Review dependency advisories and optional runtime versions before deployment. When changing authorization, uploads, ownership checks, tool permissions, or worker isolation, run the focused tests and perform appropriate integration testing. Do not replace failed security checks with permissive fallbacks.
+
+## Open-access imports and search indexes
+
+Version 0.2 fetches article metadata and XML only from the fixed Europe PMC API origin, with redirects rejected, response/input bounds, strict parsing, and identifier checks. The parser does not resolve external entities. Original XML is stored privately as an attachment. Public article access does not imply unrestricted redistribution.
+
+FTS5 indexes derived research text and therefore have the same confidentiality requirements as the project database. Search and record retrieval authorize the owning project before querying. Deletion/update triggers remove stale index text. Citation reports check reference existence and run-specific access; they are not a fact-checking or prompt-injection defense.

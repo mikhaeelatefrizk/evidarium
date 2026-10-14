@@ -11,6 +11,8 @@ import {createInterface} from 'node:readline';
 import {handleApi,json,uid,now,clean,all,first,run,audit,message,projectFor,projectData,addSource,literatureSearch,recordClaim,AppError} from '../lib/core.mjs';
 import {createDB,createBucket,sha256File} from './storage.mjs';
 import {chatContext,evidenceSearch} from './context.mjs';
+import {checkCitations} from '../lib/citations.mjs';
+import {importOpenArticle} from '../lib/papers.mjs';
 const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const KINDS=['extract','describe_csv','meta_analysis','screen_rank','symbolic_regression','mechanism_graph','python','paperqa','openscholar','biomni'];
 export function createApplication({dataRoot,python,worker=pythonWorker}={}){
@@ -59,19 +61,21 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
   if([...running.values()].some(x=>x.kind==='chat'))throw new AppError('A model response is already running.',409);if(loginJob)throw new AppError('Complete sign-in first.',409);
   const selected=await status();if(!selected.connected||!selected.models?.some(m=>m.slug===model))throw new AppError('Connect ChatGPT and select an available model first.',409);
   await message(db,p.id,'user',text);const context=await chatContext(db,p,text),id=uid(),mid=await message(db,p.id,'assistant','',model,'streaming');await run(db,'INSERT INTO tasks (id,project,kind,args,state,created,updated) VALUES (?,?,?,?,?,?,?)',id,p.id,'chat',JSON.stringify({model,coverage:context.context.coverage}),'running',now(),now());await audit(db,p.id,'chat.started',{taskId:id,model,coverage:context.context.coverage});
+  const seen=new Set();const remember=items=>{for(const x of items||[]){if(x.type==='source'||x.origin)seen.add('S:'+x.id);if(x.type==='file')seen.add('F:'+x.id+':'+x.location)}};remember(context.context.evidence.results);
   let content='',lastFlush=0;const job=invoke({command:'chat',model,...context},async(event,reply)=>{
    if(event.event==='delta'){content+=event.text;if(now()-lastFlush>300){lastFlush=now();await run(db,'UPDATE messages SET content=? WHERE id=?',content,mid)}}
    if(event.event==='tool_call'){
     let result;try{const args=JSON.parse(event.arguments);const name=event.name.replace(/^evidarium\./,'');
      if(name==='evidence_search')result=await evidenceSearch(db,p.id,clean(args.query,500));
+     else if(name==='import_article')result=await importOpenArticle({db,bucket,project:await projectFor(db,p.id,'local'),owner:'local',sourceId:args.source_id});
      else if(name==='record_claim')result=await recordClaim(db,p.id,args,'assistant');
      else if(name==='literature_search'){const current=await projectFor(db,p.id,'local');if(!current.allow_search)throw new Error('External searches are disabled for this project.');const rows=await literatureSearch(args.query,args.provider);result=[];for(const s of rows){const added=await addSource(db,p.id,s);result.push({...s,id:added.id})}await audit(db,p.id,'search.completed',{query:args.query,provider:args.provider,origin:'assistant requested',returned:rows.length,comprehensive:false});await message(db,p.id,'tool',`Exploratory ${args.provider} search: ${rows.length} records saved as unreviewed evidence for “${clean(args.query,500)}”.`)}
      else if(name==='propose_task')result=await prepare(p,args.kind,JSON.parse(args.parameters_json),'assistant');
      else throw new Error('Unsupported tool.');await audit(db,p.id,'chat.tool',{taskId:id,name,arguments:args});
-    }catch(e){result={error:clean(e.message,2000)}}reply(result);
+    }catch(e){result={error:clean(e.message,2000)}}remember(Array.isArray(result)?result:result?.results);reply(result);
    }
   });running.set(id,{...job,kind:'chat',messageId:mid});
-  job.promise.then(async result=>{if((await first(db,'SELECT state FROM tasks WHERE id=?',id))?.state!=='running')return;await run(db,"UPDATE messages SET content=?,status='complete' WHERE id=?",content,mid);await run(db,"UPDATE tasks SET state='completed',result=?,updated=? WHERE id=?",JSON.stringify(result),now(),id);await audit(db,p.id,'chat.completed',{taskId:id,...result})}).catch(async e=>{if((await first(db,'SELECT state FROM tasks WHERE id=?',id))?.state!=='running')return;await run(db,"UPDATE messages SET content=?,status='partial' WHERE id=?",content||'No completed model output was received.',mid);await run(db,"UPDATE tasks SET state='failed',error=?,updated=? WHERE id=?",clean(e.message,4000),now(),id);await message(db,p.id,'tool','Model request failed: '+clean(e.message,4000))}).finally(()=>running.delete(id));return {id,state:'running'};
+  job.promise.then(async result=>{if((await first(db,'SELECT state FROM tasks WHERE id=?',id))?.state!=='running')return;const citationAudit=await checkCitations(db,p.id,content,{seen});await run(db,"UPDATE messages SET content=?,status='complete',citation_audit=? WHERE id=?",content,JSON.stringify(citationAudit),mid);result={...result,citation_audit:citationAudit};await run(db,"UPDATE tasks SET state='completed',result=?,updated=? WHERE id=?",JSON.stringify(result),now(),id);await audit(db,p.id,'chat.completed',{taskId:id,...result})}).catch(async e=>{if((await first(db,'SELECT state FROM tasks WHERE id=?',id))?.state!=='running')return;await run(db,"UPDATE messages SET content=?,status='partial' WHERE id=?",content||'No completed model output was received.',mid);await run(db,"UPDATE tasks SET state='failed',error=?,updated=? WHERE id=?",clean(e.message,4000),now(),id);await message(db,p.id,'tool','Model request failed: '+clean(e.message,4000))}).finally(()=>running.delete(id));return {id,state:'running'};
   }finally{preparingChat=false}
  }
  async function localApi(req){try{

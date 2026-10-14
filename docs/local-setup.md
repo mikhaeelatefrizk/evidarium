@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Node.js 22.13 or newer; Python 3.11 or newer with `venv`; a desktop browser; an operating-system credential store; outbound HTTPS access to OpenAI for authorization/inference and to PubMed/Crossref when literature search is enabled. Package installation needs access to the configured Python package index. Optional tools have separate requirements.
+Node.js 22.13 or newer; Python 3.11 or newer with `venv`; a desktop browser; an operating-system credential store; outbound HTTPS access to OpenAI for authorization/inference and to Europe PMC/PubMed/Crossref when literature search is enabled. Package installation needs access to the configured Python package index. Optional tools have separate requirements.
 
 Use the prebuilt local ZIP for the shortest installation. Extract it to a folder where your user account can write. Run `bash start.sh` on macOS/Linux or `./start-windows.ps1` on Windows. No administrator privileges are needed by the app itself.
 

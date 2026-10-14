@@ -1,5 +1,5 @@
 """Create reproducible source/local ZIPs with an explicit exclusion policy."""
-import hashlib,json,os,zipfile
+import hashlib,json,os,zipfile,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'public'/'downloads';OUT.mkdir(parents=True,exist_ok=True)
@@ -18,9 +18,18 @@ def archive(name,local):
     dest=OUT/name
     with zipfile.ZipFile(dest,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
         for p in sorted(set(files)):
-            info=zipfile.ZipInfo('evidarium/'+p.relative_to(ROOT).as_posix(),(2026,10,13,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o755 if p.name.endswith('.sh') else 0o644)<<16;z.writestr(info,p.read_bytes())
+            info=zipfile.ZipInfo('evidarium/'+p.relative_to(ROOT).as_posix(),(2026,10,14,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o755 if p.name.endswith('.sh') else 0o644)<<16;z.writestr(info,p.read_bytes())
+        if local:
+            script="const path=require('node:path');const a=path.dirname(require.resolve('saxes/package.json'));const b=path.dirname(require.resolve('xmlchars/package.json',{paths:[a]}));console.log(JSON.stringify({saxes:a,xmlchars:b}))"
+            roots=json.loads(subprocess.check_output(['node','-e',script],cwd=ROOT,text=True))
+            info=zipfile.ZipInfo('evidarium/node_modules/saxes/LICENSE',(2026,10,14,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o644<<16;z.writestr(info,(ROOT/'vendor'/'saxes.LICENSE').read_bytes())
+            for package,folder in roots.items():
+                folder=Path(folder)
+                for p in sorted(folder.rglob('*')):
+                    if not p.is_file() or p.is_symlink():continue
+                    info=zipfile.ZipInfo('evidarium/node_modules/'+package+'/'+p.relative_to(folder).as_posix(),(2026,10,14,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o644<<16;z.writestr(info,p.read_bytes())
     return {'file':name,'bytes':dest.stat().st_size,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest()}
 if not (ROOT/'dist-local'/'index.html').is_file():raise SystemExit('Build the local UI before packaging.')
 results=[archive('evidarium-source.zip',False),archive('evidarium-local.zip',True)]
-(OUT/'checksums.json').write_text(json.dumps({'version':'0.1.0','artifacts':results},indent=2)+'\n')
+(OUT/'checksums.json').write_text(json.dumps({'version':'0.2.0','artifacts':results},indent=2)+'\n')
 print(json.dumps(results,indent=2))

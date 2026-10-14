@@ -39,3 +39,16 @@ Local-only routes:
 | `GET /capabilities` | Dependency presence hints; not end-to-end readiness certification. |
 
 Hosted calls to inference/execution return a clear conflict response explaining the local-edition requirement. The local UI polls project state; this release does not expose a general public task-execution API, cross-origin API token, or remotely accessible worker.
+
+## Added in 0.2
+
+| Method and path | Behavior |
+|---|---|
+| `POST /api/search` with `provider: "europepmc"` | Search abstracts and open-access metadata, up to 20 results |
+| `POST /api/sources/:id/fulltext` | Import the matching open-access Europe PMC XML, or return the existing linked file; ownership and external-request permission checked |
+| `GET /api/projects/:id/retrieve?q=term&kind=all&offset=0` | Project-scoped FTS5 search, 20 results per page; kinds: source, file, conversation, note, analysis, claim, all |
+| `GET /api/projects/:id/records/:kind/:recordId` | Read a selected record within its authorized project |
+| `GET /api/projects/:id/messages?before=message-id` | Previous 100 messages plus continuation cursor |
+| `POST /api/projects/:id/check-citations` with `{text}` | Check references against current saved evidence; does not claim that evidence was supplied to a model |
+
+Project reads return the latest 100 messages and `message_page`. Project JSON exports retain all messages. Local chat completion stores `messages.citation_audit`, including the run-specific evidence-access check.

@@ -4,14 +4,23 @@
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.1.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.2.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+
+## New in 0.2
+
+- Import open-access article XML with source identifiers, extraction coverage, license metadata, and a whole-file fingerprint.
+- Search indexed project history and extracted passages; earlier messages are no longer excluded by a 2,000-turn retrieval cutoff.
+- Inspect automated citation access reports on completed local model responses.
+- Load older conversation pages without loading the entire chat on every refresh.
+
+See the [release mechanism, live test, and remaining limits](docs/release-0.2.md).
 
 ## The central idea
 
 A fluent answer is not the research record. Evidarium keeps that record explicit:
 
 1. **Question and protocol.** Save the question, eligibility criteria, and search permission in a versioned activity trail.
-2. **Evidence.** Search PubMed or Crossref, retain identifiers, and make stage-specific inclusion/exclusion decisions with reasons.
+2. **Evidence.** Search Europe PMC, PubMed, or Crossref, retain identifiers, and make stage-specific inclusion/exclusion decisions with reasons.
 3. **Originals and coverage.** Store original bytes, check upload parts, and separately record whether text extraction succeeded, was partial, or was unavailable.
 4. **Evidence receipts.** Attach a scientific claim to an exact stored passage and label it as supporting, contradicting, or contextual evidence. The server checks text presence. A person separately reviews the interpretation.
 5. **Computation.** Prepare a task, inspect its parameters and input fingerprint, approve it, then retain its actual result or error and execution provenance.
@@ -24,9 +33,9 @@ An exact quote match proves text presence, not scientific truth. An execution re
 | Capability | Hosted workspace | Standalone local edition |
 |---|---|---|
 | Private projects and protocol | ChatGPT identity, D1 storage | Single-user local SQLite |
-| Literature search and screening | PubMed + Crossref | Same endpoints and workflow |
+| Literature search and screening | Europe PMC + PubMed + Crossref | Same endpoints and workflow |
 | Original file storage | R2 multipart uploads | Local filesystem multipart uploads |
-| Evidence receipts | Saved source abstracts | Abstracts and extracted passages |
+| Evidence receipts | Abstracts and imported article passages | Abstracts and extracted passages |
 | ChatGPT plan inference | **Not enabled** | Official open-source local-app OAuth flow |
 | Scientific computation | **Not enabled** | Explicitly approved Python/R/optional engines |
 | Project interchange | JSON and CSV | Same format; originals separately |
@@ -45,7 +54,7 @@ The real account-specific model catalog is fetched after authorization. The sele
 5. Choose **Connect your research engine → Continue with ChatGPT**. Complete authorization on OpenAI's site. Choose an available model and send a message.
 6. Create a project, upload a file, prepare an analysis, review it under **Activity**, then approve.
 
-The launcher creates a project-local `.venv` and downloads only the pinned base Python packages. It does not install heavyweight scientific engines, Docker, R, Julia, or model weights. A secure OS credential store is required. Linux needs a working Secret Service/keyring session.
+The local ZIP includes the small XML-reader JavaScript dependencies. The launcher creates a project-local `.venv` and downloads the pinned base Python packages. It does not install heavyweight scientific engines, Docker, R, Julia, or model weights. A secure OS credential store is required. Linux needs a working Secret Service/keyring session.
 
 From source:
 
@@ -125,9 +134,9 @@ The worker test is skipped without an explicitly provided Python environment. No
 - Uploads: 8 MiB parts checked with SHA-256. Interrupted uploads remain visible and removable; automatic resume is not implemented.
 - Extraction: default 300 PDF pages, 10,000 spreadsheet rows per sheet, and 2,000,000 extracted characters. Coverage warnings are retained. These are practical bounds, not model context promises.
 - CSV calculations: maximum 100,000 rows; PySR uses at most 20,000 rows/15 features. Bounds reject unsupported calculations rather than quietly analyzing a truncated dataset.
-- Conversation input: at most 24 recent messages/48,000 characters plus selected evidence. Search retrieves up to 12 term-overlap matches; this is not comprehensive semantic memory.
+- Conversation input: at most 24 recent messages/48,000 characters plus selected evidence. Model retrieval returns up to 12 FTS5 BM25 matches across indexed project history; this is not comprehensive semantic memory. The human search interface loads 20 matches per page.
 - Research loop: six model rounds; a worker run has a 35-minute upper bound. Provider context, time, and quota limits can end a request earlier. Partial output remains marked partial.
-- Search: up to 20 records per PubMed or Crossref request. This is exploratory discovery, not a complete systematic search or a PRISMA-certified review.
+- Search: up to 20 records per Europe PMC, PubMed, or Crossref request. This is exploratory discovery, not a complete systematic search or a PRISMA-certified review.
 - Import: UI accepts a 2 MiB project JSON; endpoint maximum 3 MiB, with collection limits documented in the guide. Export includes full audit history; file contents are separate.
 - One local analysis and one local chat run at a time. Optional engines may need more resources than the machine provides.
 
@@ -141,7 +150,7 @@ A website permission prompt alone cannot grant arbitrary access to a person's co
 
 The hosted edition uses the ChatGPT Sites Vinext starter, D1, and R2. `.openai/hosting.json` identifies the deployment; preserve that identity when updating this Site. The Sites publishing workflow owns source synchronization, builds, migrations, and deployment. Do not copy another user's deployment identity when forking.
 
-A GitHub repository and a running website are different deliverables. The website link above is the application entry point; GitHub stores source and documentation. The source archive includes a portable local release path and the hosted source. Do not claim a GitHub repository exists until its actual creation and contents have been verified.
+A GitHub repository and a running website are different deliverables. The website link above is the application entry point; GitHub stores source and documentation. The source archive includes a portable local release path and the hosted source. The public source repository is [mikhaeelatefrizk/evidarium](https://github.com/mikhaeelatefrizk/evidarium).
 
 ## Roadmap and quality bar
 
