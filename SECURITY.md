@@ -28,7 +28,7 @@ Task parameters are immutable after proposal; approved uploaded inputs are finge
 
 ## Render and file boundaries
 
-Model output is rendered with React, never raw model HTML. Stored external source links allow HTTP(S) only. Originals are downloaded as attachments/octet-stream. Upload filenames are not used as storage keys. The app does not extract archives, run document macros, fetch arbitrary submitted URLs, or execute code in the hosted Worker.
+Model output is rendered with React, never raw model HTML. Stored external source links allow HTTP(S) only. Originals are downloaded as attachments/octet-stream. Upload filenames are not used as storage keys. The app does not extract archives, run document macros, fetch arbitrary submitted URLs, or execute user-supplied code in the hosted Worker. Bounded native analysis runs trusted application code after approval.
 
 File-format parsers may have their own vulnerabilities. Uploaded files are not antivirus-scanned by this code. Browser download safety, OS protection, patched dependencies, and source trust still matter.
 

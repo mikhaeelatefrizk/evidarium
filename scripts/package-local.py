@@ -20,7 +20,7 @@ def archive(name,local):
         for p in sorted(set(files)):
             info=zipfile.ZipInfo('evidarium/'+p.relative_to(ROOT).as_posix(),(2026,10,14,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o755 if p.name.endswith('.sh') else 0o644)<<16;z.writestr(info,p.read_bytes())
         if local:
-            script="const path=require('node:path');const a=path.dirname(require.resolve('saxes/package.json'));const b=path.dirname(require.resolve('xmlchars/package.json',{paths:[a]}));console.log(JSON.stringify({saxes:a,xmlchars:b}))"
+            script="const path=require('node:path');const a=path.dirname(require.resolve('saxes/package.json'));const b=path.dirname(require.resolve('xmlchars/package.json',{paths:[a]}));console.log(JSON.stringify({saxes:a,xmlchars:b,jstat:path.dirname(require.resolve('jstat/package.json')),unpdf:path.dirname(path.dirname(require.resolve('unpdf')))}))"
             roots=json.loads(subprocess.check_output(['node','-e',script],cwd=ROOT,text=True))
             info=zipfile.ZipInfo('evidarium/node_modules/saxes/LICENSE',(2026,10,14,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o644<<16;z.writestr(info,(ROOT/'vendor'/'saxes.LICENSE').read_bytes())
             for package,folder in roots.items():
@@ -31,5 +31,5 @@ def archive(name,local):
     return {'file':name,'bytes':dest.stat().st_size,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest()}
 if not (ROOT/'dist-local'/'index.html').is_file():raise SystemExit('Build the local UI before packaging.')
 results=[archive('evidarium-source.zip',False),archive('evidarium-local.zip',True)]
-(OUT/'checksums.json').write_text(json.dumps({'version':'0.3.0','artifacts':results},indent=2)+'\n')
+(OUT/'checksums.json').write_text(json.dumps({'version':'0.4.0','artifacts':results},indent=2)+'\n')
 print(json.dumps(results,indent=2))

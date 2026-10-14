@@ -52,3 +52,11 @@ Hosted calls to inference/execution return a clear conflict response explaining 
 | `POST /api/projects/:id/check-citations` with `{text}` | Check references against current saved evidence; does not claim that evidence was supplied to a model |
 
 Project reads return the latest 100 messages and `message_page`. Project JSON exports retain all messages. Local chat completion stores `messages.citation_audit`, including the run-specific evidence-access check.
+
+## Website-native analysis (0.4)
+
+`POST /api/tasks` accepts `{project, kind, args}` with `kind` equal to `web_describe_csv`, `web_meta_analysis`, `web_extract_text` or `web_extract_pdf`. All require a completed `args.file_id` in the owned project. Meta-analysis also requires `effect`, `variance`, optional `label`, and `independent_effects_confirmed: true`. Unknown parameters are rejected. Preparation records the whole-file SHA-256 and engine version.
+
+`POST /api/tasks/:id/approve` rechecks ownership, version and bytes, claims the pending task once, executes a bounded native calculation and returns its actual state. `POST /api/tasks/:id/cancel` cancels a pending/running record. Completed output and extraction are committed together with completion audit/message records. Approval is not silently retried. A request interrupted by platform failure may leave a running record; inspect/cancel it and prepare a new proposal.
+
+`GET /api/science-check` is public and readonly: it executes three fixed public reference checks, never accepts a user file, and never reads private project data. It is a deployment diagnostic, not account-flow or scientific validation.

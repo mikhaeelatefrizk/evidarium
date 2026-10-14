@@ -32,3 +32,11 @@ Literature metadata is retrieved from PubMed/NCBI E-utilities and Crossref REST.
 ## Bundled local XML reader
 
 The local release includes `saxes` 6.0.0 (ISC) and `xmlchars` 2.2.0 (MIT). Their package license files are included alongside the bundled runtime code. Saxes upstream is archived; dependency maintenance remains an explicit project responsibility. [Saxes](https://github.com/lddubeau/saxes) · [xmlchars](https://github.com/lddubeau/xmlchars).
+
+## jStat 1.9.6
+
+Website-native statistical distribution functions use [jStat](https://github.com/jstat/jstat), MIT License, copyright (c) 2013 jStat. Its complete license is included with the bundled package in the local download. This is not metafor; the native REML implementation is Evidarium code, with independently executed metafor used as a numerical reference.
+
+## unpdf 1.8.1 and PDF.js
+
+The website text extractor uses [unpdf](https://github.com/unjs/unpdf) (MIT, copyright 2023–present Johann Schopplich), including its serverless [Mozilla PDF.js](https://github.com/mozilla/pdf.js) build (Apache-2.0). See `vendor/pdfjs.LICENSE` and the unpdf package LICENSE distributed in the local ZIP. No upstream parser code was modified. Original source and notices remain with their packages.

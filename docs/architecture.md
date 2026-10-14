@@ -67,3 +67,11 @@ Optional package environments are selected from a local, user-owned `engine-runt
 The shared `lib/live-check.mjs` runner is used by both the local UI and CLI. It checks that the runtime is local and the requested model appears in the real account catalog before creating a verification project. It approves only two fixed fixture computations, waits for completed results, performs two cited chat turns, and verifies export/audit persistence. It records failures and never fabricates a passing result. The hosted edition refuses this check. The developer verification used a controlled test model; real account completion remains outstanding.
 
 Runtime launchers probe SQLite FTS5 before opening user data. CI checks actual Windows/macOS/Linux installation and HTTP operation, separately from browser or OAuth validation. See the versioned release record for checks and their limits.
+
+## Website execution (0.4)
+
+`lib/web-tasks.mjs` handles owned, approved native tasks in D1/R2 or local SQLite/files. `lib/web-science.mjs` implements strict CSV parsing, descriptive statistics and an intercept-only REML fit. jStat supplies distribution functions. `lib/web-pdf.mjs` reads PDF text sequentially using pinned unpdf/PDF.js with evaluation and remote resource loading disabled. No custom code, AI token or external analysis server is involved. Input bytes are held as an immutable snapshot for that request and hashed before approval; mutation after preparation rejects execution.
+
+Final results, extraction updates and completion records use a database batch. Compare-and-set transitions prevent double approval and discard a result if cancellation won. Platform termination can still leave an interrupted request recorded as running; this release has no durable hosted job queue or automatic retries. Dataset bounds are distinct from the larger original-file storage bounds. PDF page/character limits and missing text produce explicit partial coverage.
+
+The public reference route runs only pinned public fixtures. It demonstrates actual deployed computation, not authenticated browser behavior or private storage validation.

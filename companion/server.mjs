@@ -14,6 +14,7 @@ import {chatContext,evidenceSearch} from './context.mjs';
 import {checkCitations} from '../lib/citations.mjs';
 import {importOpenArticle} from '../lib/papers.mjs';
 import {enginePython} from './engine-runtime.mjs';
+import {handleWebTasks,WEB_KINDS} from '../lib/web-tasks.mjs';
 const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const KINDS=['extract','describe_csv','meta_analysis','screen_rank','symbolic_regression','mechanism_graph','python','paperqa','openscholar','biomni'];
 export function createApplication({dataRoot,python,worker=pythonWorker}={}){
@@ -95,9 +96,10 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
   if(route==='ai/logout'&&req.method==='POST'){if(running.size||loginJob)throw new AppError('Finish or cancel active tasks before disconnecting.',409);const result=await invoke({command:'logout'}).promise;statusCache=result;statusAt=now();return json(result)}
   if(route==='capabilities'&&req.method==='GET')return json(await invoke({command:'capabilities'}).promise);
   if(route==='chat'&&req.method==='POST'){const b=await read(),p=await projectFor(db,b.project,user.userId);const text=clean(b.text,20000);if(!text)throw new AppError('Message is empty.');return json(await beginChat(p,text,clean(b.model,150)),202)}
-  if(route==='tasks'&&req.method==='POST'){const b=await read(),p=await projectFor(db,b.project,user.userId);return json(await prepare(p,b.kind,b.args),201)}
+  if(route==='tasks'&&req.method==='POST'){const b=await read();if(WEB_KINDS.includes(b.kind))return await handleWebTasks(req,{db,bucket,user,local:true,readBody:async()=>b});const p=await projectFor(db,b.project,user.userId);return json(await prepare(p,b.kind,b.args),201)}
   if(/^tasks\/[^/]+\/(approve|cancel)$/.test(route)&&req.method==='POST'){
    const [,id,action]=route.split('/'),t=await first(db,'SELECT * FROM tasks WHERE id=?',id);if(!t)throw new AppError('Task not found.',404);await projectFor(db,t.project,user.userId);
+   if(WEB_KINDS.includes(t.kind))return await handleWebTasks(req,{db,bucket,user,local:true});
    if(action==='approve')return json(await approve(t),202);
    if(!['running','awaiting_approval','queued'].includes(t.state))throw new AppError('This task has already ended.',409);
    await run(db,"UPDATE tasks SET state='cancelled',updated=? WHERE id=?",now(),id);const job=running.get(id);job?.cancel();if(job?.messageId)await run(db,"UPDATE messages SET status='partial' WHERE id=?",job.messageId);

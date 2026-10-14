@@ -4,7 +4,17 @@
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.3.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.4.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+
+## New in 0.4: real website computation
+
+The hosted website now runs CSV descriptive statistics, native REML/Knapp–Hartung meta-analysis, UTF-8 text extraction and PDF text extraction **without installing the local app**. Inputs are checksummed, tasks require approval, results retain provenance, and extracted passages support exact-text evidence receipts. Results include tables, CSV/JSON exports and a downloadable meta-analysis forest plot.
+
+The native meta-analysis is Evidarium JavaScript, not the R/metafor package. Twenty actual R/metafor reference cases passed the declared tolerance. A fixed-data [server reference check](https://evidarium.mikhaeelatef.chatgpt.site/api/science-check) executes CSV, BCG meta-analysis and two-page PDF parsing on the server. It does not validate private-account flows or scientific interpretation.
+
+Website limits: CSV/text 1 MiB; CSV 50,000 rows / 100 columns / 250,000 cells; meta-analysis 3–200 independent effects; PDF 5 MiB / 50 pages; extracted text 200,000 characters. PDF reading is text-only, with partial coverage reported. **Hosted AI chat remains disabled**; specialist engines still need their documented environments.
+
+See [release 0.4](docs/release-0.4.md) for the mechanism, verification and unfinished work.
 
 ## New in 0.3
 
@@ -39,7 +49,7 @@ An exact quote match proves text presence, not scientific truth. An execution re
 | Original file storage | R2 multipart uploads | Local filesystem multipart uploads |
 | Evidence receipts | Abstracts and imported article passages | Abstracts and extracted passages |
 | ChatGPT plan inference | **Not enabled** | Official open-source local-app OAuth flow |
-| Scientific computation | **Not enabled** | Explicitly approved Python/R/optional engines |
+| Scientific computation | Native CSV / REML meta-analysis / PDF and text extraction | Same native engines plus approved Python/R/optional engines |
 | Project interchange | JSON and CSV | Same format; originals separately |
 | Automatic cloud/local sync | **Not implemented** | Import/export only |
 
@@ -56,7 +66,7 @@ The real account-specific model catalog is fetched after authorization. The sele
 5. Choose **Connect your research engine → Continue with ChatGPT**. Complete authorization on OpenAI's site. Choose an available model and send a message.
 6. Create a project, upload a file, prepare an analysis, review it under **Activity**, then approve.
 
-The local ZIP includes the small XML-reader JavaScript dependencies. The launcher creates a project-local `.venv` and downloads the pinned base Python packages. It does not install heavyweight scientific engines, Docker, R, Julia, or model weights. A secure OS credential store is required. Linux needs a working Secret Service/keyring session.
+The local ZIP includes XML, statistics and PDF-reader JavaScript dependencies. The launcher creates a project-local `.venv` and downloads the pinned base Python packages. It does not install heavyweight scientific engines, Docker, R, Julia, or model weights. A secure OS credential store is required. Linux needs a working Secret Service/keyring session.
 
 From source:
 
@@ -74,6 +84,8 @@ All adapters call actual packages or runtimes. Missing dependencies produce erro
 
 | Engine | Actual operation | Status and constraints |
 |---|---|---|
+| Website PDF/text | unpdf 1.8.1 / PDF.js; UTF-8 decoding | No installation; bounded text extraction. No OCR or layout interpretation. |
+| Website CSV/meta-analysis | Evidarium JavaScript + jStat 1.9.6 | Descriptive statistics and intercept-only REML/Knapp–Hartung; 20 R/metafor reference cases. |
 | Base extraction | pypdf, python-docx, openpyxl, UTF-8 text readers | Text, CSV, DOCX and XLSX execution tested; format-specific coverage reported. No default OCR or image interpretation. |
 | Descriptive CSV analysis | NumPy finite-number summaries | Tested against a hand-computed reference and through the real worker protocol. |
 | Docling | Structured document conversion through `DocumentConverter` | DOCX prose/table fixture passed; OCR and complex PDFs remain unverified. Additional models/resources may download. |

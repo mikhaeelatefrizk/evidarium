@@ -1,3 +1,9 @@
+# Current verification — 0.4.0
+
+See [release 0.4](release-0.4.md) for native hosted analysis, 20 independently executed R/metafor numerical comparisons, PDF coverage checks and the public deployed-server reference check. The current JavaScript suite passes 43 checks with a configured test Python and zero skips; TypeScript passed. Live subscription inference and full browser/researcher validation remain unverified.
+
+The previous record follows for historical engine and platform evidence.
+
 # Verification record — 0.3.0
 
 14 October 2026. This records bounded engineering checks, not a scientific or security certification. See [release 0.3](release-0.3.md) for datasets, exact outputs, CI links, defects and remaining blockers.
