@@ -15,7 +15,7 @@ Open **Writing & references** in a signed-in project:
 
 ## Data preservation and boundaries
 
-Migration `0006_research_writing.sql` adds source metadata, manuscripts, revisions, reference locks and durable upload parts. It imports existing unfinished-upload manifests without changing their stored part hashes. Source metadata and current manuscript contents are included in project exports; import creates new local IDs, remaps source citations and labels the event as external. Imported manuscript revision history is not reconstructed. Original files remain separate.
+Migration `0006_research_writing.sql` adds source metadata, manuscripts, revisions, reference locks and durable upload parts. The migration is schema-only. When an owner next inspects or resumes an unfinished upload, bounded recovery copies its old manifest without changing stored part hashes. Source metadata and current manuscript contents are included in project exports; import creates new local IDs, remaps source citations and labels the event as external. Imported manuscript revision history is not reconstructed. Original files remain separate.
 
 Limits: 1 MiB / 200 records per bibliography import; 20 manuscripts per project; 200,000 characters per manuscript; latest 50 saved revisions retained. Saves are explicit. The UI warns before abandoning unsaved drafts and offers a current-text download. Project JSON import still has its documented size/collection bounds; individual manuscript exports remain available. Other 0.4 upload/extraction/analysis limits remain unchanged.
 
@@ -24,7 +24,7 @@ Limits: 1 MiB / 200 records per bibliography import; 20 manuscripts per project;
 - **59 JavaScript checks passed with zero skips**, using the configured real Python worker. Sixteen new checks cover bibliography parsing, malformed inputs, independent field expectations, explicit import preview/commit, duplicate and concurrent import handling, draft storage/conflicts/history/deletion, citation escaping and warnings, project interchange, screening-stage history, resumed multipart data integrity, interrupted completion recovery, and migration of old upload manifests.
 - TypeScript checking and the production local frontend build passed.
 - [Independent bibliography reader report](validation/bibliography-0.5.json): three actual exported fixtures were parsed by **rispy 0.9.0** and **bibtexparser 1.4.3**, checking expected authors, titles, dates, DOI and entry types. These are independent parsers, not Evidarium's own import code. They do not establish complete format conformance or a live Zotero/EndNote walkthrough.
-- The cross-platform installer check now includes actual HTTP reference preview/import, draft creation/save, numbered citation preview and screening-ledger retrieval, in addition to launching and serving the application. Current run results are recorded when available; previous CI is not represented as evidence for this release.
+- The cross-platform installer check now includes actual HTTP reference preview/import, draft creation/save, numbered citation preview and screening-ledger retrieval, in addition to launching and serving the application. The first Windows run exposed a test-harness Unicode decoding error; the independent-reader subprocess now explicitly decodes UTF-8. Final run results are recorded below when available; earlier CI is not represented as evidence for the final source.
 
 Reproduce with the documented base environment, plus test-only `rispy==0.9.0` and `bibtexparser==1.4.3`:
 

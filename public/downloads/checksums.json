@@ -3,13 +3,13 @@
   "artifacts": [
     {
       "file": "evidarium-source.zip",
-      "bytes": 475400,
-      "sha256": "df63e18368b71340deb6b76e3892a932786350ee851cf8a9acb438da73a558e4"
+      "bytes": 477516,
+      "sha256": "d4e98d6a5ff7eb4412a1e2dd64282294456210edafdb68844f0f5c30319d0add"
     },
     {
       "file": "evidarium-local.zip",
-      "bytes": 1530287,
-      "sha256": "d855cc43fa93ab33bfd0e956ebfcf6e9f96ed1fe3c8ba10bd5778c0995dce5e6"
+      "bytes": 1532403,
+      "sha256": "fea4b780ba8a35580b34059421fc0ab0e6d226c6fae19d9561afb0f00b09b639"
     }
   ]
 }

@@ -14,7 +14,7 @@ CASES=[
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output');args=parser.parse_args()
     code="import {parseReferences,exportReferences} from './lib/references.mjs';let raw='';for await(const chunk of process.stdin)raw+=chunk;const records=parseReferences(raw,'csl-json').records.map((s,i)=>({...s,id:'record'+i}));process.stdout.write(JSON.stringify({ris:exportReferences(records,'ris'),bib:exportReferences(records,'bibtex'),csl:exportReferences(records,'csl-json')}));"
-    actual=json.loads(subprocess.check_output(['node','--input-type=module','-e',code],input=json.dumps(CASES),text=True,cwd=ROOT))
+    actual=json.loads(subprocess.check_output(['node','--input-type=module','-e',code],input=json.dumps(CASES),text=True,encoding='utf-8',cwd=ROOT))
     ris=rispy.loads(actual['ris']);bib=bibtexparser.loads(actual['bib']).entries;csldata=json.loads(actual['csl'])
     assert len(ris)==len(bib)==len(CASES)==3
     for i,original in enumerate(CASES):
