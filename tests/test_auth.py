@@ -24,4 +24,15 @@ class AuthTests(unittest.TestCase):
         class Plaintext:priority=1
         Plaintext.__module__='keyrings.alt.file'
         with patch.object(auth.keyring,'get_keyring',return_value=Plaintext()),self.assertRaises(RuntimeError):auth.backend()
+    def response(self,**updates):
+        t={'access_token':'synthetic-access','refresh_token':'synthetic-refresh','token_type':'Bearer','scope':auth.SCOPES,'expires_in':3600,'id_token':'synthetic-id'};t.update(updates);return t
+    def test_incomplete_tokens_never_become_usable_authorization(self):
+        for values in [{'access_token':''},{'refresh_token':''},{'expires_in':0},{'expires_in':True},{'expires_in':float('inf')},{'token_type':'Other'},{'scope':'openid chatgpt.tokens.use.direct'},{'id_token':None}]:
+            with self.subTest(values=values),self.assertRaises(RuntimeError):auth.validated_tokens(self.response(**values),'client')
+    def test_rotating_refresh_preserves_grant_and_rejects_identity_changes(self):
+        old=self.response()
+        with patch.object(auth,'validate_id',return_value={'sub':'person-a'}):
+            new,claims=auth.validated_tokens({'access_token':'new-synthetic','refresh_token':'rotated-synthetic','expires_in':600},'client',subject='person-a',previous=old)
+            self.assertEqual(new['refresh_token'],'rotated-synthetic');self.assertEqual(new['scope'],auth.SCOPES)
+            with self.assertRaises(RuntimeError):auth.validated_tokens(self.response(),'client',subject='person-b',previous=old)
 if __name__=='__main__':unittest.main()

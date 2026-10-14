@@ -13,6 +13,7 @@ import {createDB,createBucket,sha256File} from './storage.mjs';
 import {chatContext,evidenceSearch} from './context.mjs';
 import {checkCitations} from '../lib/citations.mjs';
 import {importOpenArticle} from '../lib/papers.mjs';
+import {enginePython} from './engine-runtime.mjs';
 const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const KINDS=['extract','describe_csv','meta_analysis','screen_rank','symbolic_regression','mechanism_graph','python','paperqa','openscholar','biomni'];
 export function createApplication({dataRoot,python,worker=pythonWorker}={}){
@@ -21,7 +22,7 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
  const db=createDB(path.join(dataRoot,'research.sqlite'),path.join(base,'drizzle')),bucket=createBucket(path.join(dataRoot,'files'));
  const user={userId:'local',displayName:'Local researcher'};const running=new Map();let loginJob=null,statusCache=null,statusAt=0,statusJob=null;let preparingAnalysis=false,preparingChat=false;
  db.raw.exec("UPDATE tasks SET state='interrupted',error='The local app stopped before execution completed. Review and prepare a new task.',updated="+now()+" WHERE state IN ('running','queued'); UPDATE messages SET status='partial' WHERE status='streaming';");
- function invoke(payload,onEvent){return worker({python,dataRoot,payload,onEvent})}
+ function invoke(payload,onEvent){const selected=payload.command==='tool'?enginePython(dataRoot,payload.kind,python):python;return worker({python:selected,dataRoot,payload,onEvent})}
  async function status(){if(loginJob)return {connected:false,models:[],pending:true,url:loginJob.url};if(statusCache&&now()-statusAt<30000)return statusCache;if(!statusJob)statusJob=invoke({command:'status'}).promise.then(result=>{statusCache=result;statusAt=now();return result}).catch(e=>({connected:false,models:[],error:e.message})).finally(()=>{statusJob=null});return statusJob}
  async function prepare(p,kind,args,origin='human'){
   if(!KINDS.includes(kind))throw new AppError('Unknown analysis engine.');if(!args||typeof args!=='object'||Array.isArray(args))throw new AppError('Task parameters must be a JSON object.');

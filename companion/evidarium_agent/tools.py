@@ -19,10 +19,12 @@ def provenance(engine,params,path=None):
 def read_csv(path,limit=100000):
     with open(path,encoding='utf-8-sig',newline='') as f:
         reader=csv.DictReader(f);names=reader.fieldnames
-        if not names:raise ValueError('CSV has no header.')
+        if not names or any(not n.strip() for n in names):raise ValueError('CSV needs a nonempty name for every column.')
+        if len(set(names))!=len(names):raise ValueError('CSV column names must be unique; duplicate headers would discard values.')
         rows=[]
         for i,row in enumerate(reader):
             if i>=limit:raise ValueError(f'This operation accepts at most {limit:,} rows. No truncated calculation was returned.')
+            if None in row or any(v is None for v in row.values()):raise ValueError(f'CSV row {i+2} has a different number of fields from its header.')
             rows.append(row)
     return names,rows
 
@@ -97,12 +99,13 @@ def run_tool(kind,args,path=None,project=None):
         with tempfile.TemporaryDirectory() as td:
             input_path=Path(td)/'input.csv';output=Path(td)/'result.json';script=Path(td)/'analysis.R'
             with input_path.open('w',newline='') as f:w=csv.writer(f);w.writerow(['yi','vi']);w.writerows(values)
-            script.write_text('library(metafor)\nlibrary(jsonlite)\na<-commandArgs(trailingOnly=TRUE)\nd<-read.csv(a[1])\nm<-rma(yi=yi,vi=vi,data=d,method="REML",test="knha")\np<-predict(m)\nwrite_json(list(estimate=as.numeric(m$b),se=m$se,ci_lower=m$ci.lb,ci_upper=m$ci.ub,p_value=m$pval,tau2=m$tau2,I2=m$I2,k=m$k,prediction_lower=p$pi.lb,prediction_upper=p$pi.ub,metafor_version=as.character(packageVersion("metafor")),method="REML with Knapp-Hartung inference"),a[2],auto_unbox=TRUE,pretty=TRUE)\n')
+            script.write_text('library(metafor)\nlibrary(jsonlite)\na<-commandArgs(trailingOnly=TRUE)\nd<-read.csv(a[1])\nm<-rma(yi=yi,vi=vi,data=d,method="REML",test="knha")\np<-predict(m)\nwrite_json(list(estimate=as.numeric(m$b),se=m$se,ci_lower=m$ci.lb,ci_upper=m$ci.ub,p_value=m$pval,tau2=m$tau2,I2=m$I2,k=m$k,prediction_lower=p$pi.lb,prediction_upper=p$pi.ub,metafor_version=as.character(packageVersion("metafor")),method="REML with Knapp-Hartung inference"),a[2],auto_unbox=TRUE,pretty=TRUE,digits=16)\n')
             res=subprocess.run(['Rscript',str(script),str(input_path),str(output)],capture_output=True,text=True,timeout=120)
             if res.returncode:raise RuntimeError('R/metafor failed: '+res.stderr[-3000:])
             out=json.loads(output.read_text());out['analysis_code']=script.read_text();out['interpretation']='Pooling requires scientifically compatible outcomes and effect scales. Heterogeneity statistics do not resolve incompatibility.'
     elif kind=='screen_rank':
         import numpy as np
+        import pandas as pd
         from asreview import ActiveLearningCycle
         from asreview.models.queriers import Max
         from asreview.models.classifiers import SVM
@@ -112,8 +115,10 @@ def run_tool(kind,args,path=None,project=None):
         labeled=[i for i,s in enumerate(sources) if s['decision'] in ['include','exclude']];unlabeled=[i for i,s in enumerate(sources) if s['decision']=='unknown'];y=np.array([int(sources[i]['decision']=='include') for i in labeled])
         if set(y.tolist())!={0,1}:raise ValueError('ASReview requires at least one included and one excluded seed at the same screening stage.')
         if not unlabeled:raise ValueError('No unreviewed records remain at this stage.')
-        cycle=ActiveLearningCycle(querier=Max(),classifier=SVM(C=3),balancer=Balanced(ratio=5),feature_extractor=Tfidf());X=cycle.transform([s['title']+' '+s.get('abstract','') for s in sources]);cycle.fit(X[labeled],y);ranked=np.array(unlabeled)[cycle.rank(X[unlabeled])]
-        out={'priority_order':[{'source_id':sources[int(i)]['id'],'title':sources[int(i)]['title']} for i in ranked],'stage':stage,'labels_unchanged':True,'note':'Prioritization is not a screening decision or a guarantee of recall.'}
+        cycle=ActiveLearningCycle(querier=Max(),classifier=SVM(C=3,random_state=42),balancer=Balanced(ratio=5),feature_extractor=Tfidf())
+        frame=pd.DataFrame([{'title':s.get('title') or '', 'abstract':s.get('abstract') or ''} for s in sources])
+        X=cycle.transform(frame);cycle.fit(X[labeled],y);ranked=np.array(unlabeled)[cycle.rank(X[unlabeled])]
+        out={'priority_order':[{'source_id':sources[int(i)]['id'],'title':sources[int(i)]['title']} for i in ranked],'stage':stage,'labels_unchanged':True,'seed':42,'training_records':len(labeled),'candidate_records':len(unlabeled),'note':'Prioritization is not a screening decision or a guarantee of recall.'}
     elif kind=='symbolic_regression':
         import numpy as np
         from pysr import PySRRegressor
@@ -128,13 +133,19 @@ def run_tool(kind,args,path=None,project=None):
         model.fit(a[tr,:-1],a[tr,-1]);pred=model.predict(a[te,:-1]);out={'equation':str(model.sympy()),'features':features,'target':target,'held_out_rmse':float(np.sqrt(np.mean((pred-a[te,-1])**2))),'train_rows':len(tr),'test_rows':len(te),'split_seed':42,'note':'A fitted candidate equation is not an established causal law; random holdout may be inappropriate for grouped or time-series data.'}
     elif kind=='mechanism_graph':
         from indra.statements import stmts_from_json
+        if path and Path(path).stat().st_size>8*1024**2:raise ValueError('INDRA statement JSON is limited to 8 MiB per task.')
         statements=json.loads(Path(path).read_text()) if path else args.get('statements')
-        if not isinstance(statements,list):raise ValueError('Provide a list of INDRA statement JSON objects.')
-        stmts=stmts_from_json(statements);nodes={};edges=[]
+        if not isinstance(statements,list) or not statements or len(statements)>10000:raise ValueError('Provide between 1 and 10,000 INDRA statement JSON objects.')
+        stmts=stmts_from_json(statements)
+        if len(stmts)!=len(statements):raise ValueError(f'INDRA could parse only {len(stmts)} of {len(statements)} statements. No partial graph was returned; repair the input.')
+        nodes={};edges=[]
         for st in stmts:
             agents=[a for a in st.agent_list() if a is not None]
-            for a in agents:nodes[a.name]={'name':a.name,'db_refs':a.db_refs}
-            edges.append({'type':type(st).__name__,'agents':[a.name for a in agents],'evidence':[e.to_json() for e in st.evidence]})
+            agent_ids=[]
+            for a in agents:
+                identity=a.to_json();node_id=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()[:24]
+                nodes[node_id]={'id':node_id,'name':a.name,'db_refs':a.db_refs,'state':identity};agent_ids.append(node_id)
+            edges.append({'statement_id':st.uuid,'type':type(st).__name__,'agents':[a.name for a in agents],'agent_ids':agent_ids,'evidence':[e.to_json() for e in st.evidence]})
         out={'nodes':list(nodes.values()),'claims':edges,'input_statements':len(statements),'parsed_statements':len(stmts),'note':'Assembly of supplied mechanistic claims, not independent experimental validation or automatic PDF extraction.'}
     elif kind=='paperqa':
         from paperqa import Docs,Settings

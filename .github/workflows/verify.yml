@@ -1,0 +1,50 @@
+name: Verify research workspace
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install base Python requirements
+        run: python -m pip install -r companion/requirements.txt
+      - name: Install the local server's JavaScript dependencies
+        run: npm install --prefix .ci-deps --ignore-scripts saxes@6.0.0
+      - name: Prepare local dependency layout and worker path
+        shell: python
+        run: |
+          import os, shutil, sys
+          from pathlib import Path
+          for name in ['saxes', 'xmlchars']:
+              shutil.copytree(Path('.ci-deps/node_modules')/name,Path('node_modules')/name)
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write('EVIDARIUM_TEST_PYTHON='+sys.executable+'\n')
+      - name: Python validation
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: HTTP, storage, approval and real worker tests
+        run: node --test tests/workspace.test.mjs tests/research.test.mjs tests/runtime.test.mjs tests/worker.test.mjs
+      - name: Check launcher syntax on Unix
+        if: runner.os != 'Windows'
+        run: bash -n start.sh
+      - name: Check launcher syntax on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'start-windows.ps1'), [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { throw ($errors | Out-String) }

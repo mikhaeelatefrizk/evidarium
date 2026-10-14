@@ -23,4 +23,12 @@ class ScienceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'test.csv';p.write_text('x\n1\n2\n')
             with self.assertRaises(ValueError):read_csv(str(p),limit=1)
+    def test_ambiguous_csv_headers_and_ragged_rows_are_rejected(self):
+        from evidarium_agent.tools import read_csv
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'ambiguous.csv'
+            for text in ['x,x\n1,2\n','x,\n1,2\n','x,y\n1\n','x,y\n1,2,3\n']:
+                with self.subTest(text=text):
+                    p.write_text(text)
+                    with self.assertRaises(ValueError):read_csv(str(p))
 if __name__=='__main__':unittest.main()

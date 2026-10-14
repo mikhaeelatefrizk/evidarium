@@ -4,6 +4,7 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlencode, urlparse, parse_qs
 import requests, jwt, keyring
+import math
 from filelock import FileLock
 ISSUER='https://auth.openai.com'
 RESOURCE='https://api.openai.com/v1'
@@ -47,6 +48,25 @@ def validate_id(token,client_id,nonce=None):
     if not claims.get('sub') or (nonce is not None and claims.get('nonce')!=nonce): raise RuntimeError('OAuth identity validation failed.')
     return claims
 
+def validated_tokens(t,client_id,nonce=None,subject=None,previous=None):
+    """Validate an entire replacement before persisting any identity or credential."""
+    if not isinstance(t,dict):raise RuntimeError('OAuth returned an invalid token response.')
+    merged={**(previous or {}),**t}
+    if not isinstance(t.get('access_token'),str) or not t['access_token']:raise RuntimeError('OAuth did not return an access token.')
+    if not isinstance(merged.get('refresh_token'),str) or not merged['refresh_token']:raise RuntimeError('OAuth did not return renewable authorization.')
+    if str(merged.get('token_type','')).lower()!='bearer':raise RuntimeError('OAuth returned an unsupported token type.')
+    scopes=set(str(merged.get('scope','')).split())
+    if not {'resource.invoke','chatgpt.tokens.use.direct'}<=scopes:raise RuntimeError('Permission to use ChatGPT plan allowance was not granted.')
+    expiry=t.get('expires_in')
+    if isinstance(expiry,bool) or not isinstance(expiry,(int,float)) or not math.isfinite(expiry) or expiry<=0:raise RuntimeError('OAuth returned an invalid token lifetime.')
+    claims=None
+    if t.get('id_token'):
+        claims=validate_id(t['id_token'],client_id,nonce)
+        if subject and claims['sub']!=subject:raise RuntimeError('The ChatGPT identity differs from this installation’s registered account.')
+    elif previous is None:raise RuntimeError('OAuth did not return an identity token.')
+    merged['expires_at']=time.time()+expiry
+    return merged,claims
+
 def login(emit):
     backend();c=config();d=discovery();verifier=secrets.token_urlsafe(64);challenge=base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=');state=secrets.token_urlsafe(32);nonce=secrets.token_urlsafe(32);out={}
     class Handler(BaseHTTPRequestHandler):
@@ -74,13 +94,12 @@ def login(emit):
     client=out.get('client_id') or c.get('client_id')
     if not client or client=='dynamic_agent_client':raise RuntimeError('OpenAI did not return an issued client ID.')
     if c.get('client_id') and c['client_id']!=client:raise RuntimeError('The authorization belongs to another client. Use the existing account or reset the local account registration explicitly.')
-    c['client_id']=client;save_config(c)
+    if not out.get('code'):raise RuntimeError('OAuth callback did not contain an authorization code.')
     r=requests.post(d['token_endpoint'],data={'grant_type':'authorization_code','client_id':client,'code':out.get('code',''),'code_verifier':verifier,'redirect_uri':redirect,'resource':RESOURCE},timeout=30)
     if not r.ok:raise RuntimeError(f'OAuth token exchange failed (HTTP {r.status_code}). No model request was made.')
-    t=r.json();claims=validate_id(t.get('id_token',''),client,nonce)
-    if c.get('subject') and c['subject']!=claims['sub']:raise RuntimeError('The ChatGPT identity differs from this installation’s registered account.')
-    if 'chatgpt.tokens.use.direct' not in t.get('scope','').split():raise RuntimeError('Permission to use ChatGPT plan allowance was not granted.')
-    c.update(subject=claims['sub'],email=claims.get('email',''),name=claims.get('name','Researcher'));save_config(c);t['expires_at']=time.time()+t.get('expires_in',3600);save_tokens(t)
+    t,claims=validated_tokens(r.json(),client,nonce,c.get('subject'))
+    c.update(client_id=client,subject=claims['sub'],email=claims.get('email',''),name=claims.get('name','Researcher'))
+    save_tokens(t);save_config(c)
     return {'connected':True,'account':c.get('email') or c.get('name')}
 
 def access_token():
@@ -98,12 +117,8 @@ def access_token():
             raise RuntimeError('The provider does not allow token renewal yet. Retry after the renewal window opens.')
         r=requests.post(discovery()['token_endpoint'],data={'grant_type':'refresh_token','client_id':c['client_id'],'refresh_token':t.get('refresh_token',''),'resource':RESOURCE},timeout=30)
         if not r.ok:raise RuntimeError(f'ChatGPT authorization needs renewal (HTTP {r.status_code}). Sign in again.')
-        n=r.json()
-        if n.get('id_token'):
-            claims=validate_id(n['id_token'],c['client_id'])
-            if claims['sub']!=c.get('subject'):raise RuntimeError('Refreshed identity mismatch.')
-        if 'scope' in n and 'chatgpt.tokens.use.direct' not in n['scope'].split():raise RuntimeError('Refreshed authorization no longer permits ChatGPT plan usage.')
-        merged={**t,**n,'expires_at':time.time()+n.get('expires_in',3600)};save_tokens(merged);return merged['access_token']
+        merged,_=validated_tokens(r.json(),c['client_id'],subject=c.get('subject'),previous=t)
+        save_tokens(merged);return merged['access_token']
 
 def status():
     try:
