@@ -26,6 +26,12 @@ Limits: 1 MiB / 200 records per bibliography import; 20 manuscripts per project;
 - [Independent bibliography reader report](validation/bibliography-0.5.json): three actual exported fixtures were parsed by **rispy 0.9.0** and **bibtexparser 1.4.3**, checking expected authors, titles, dates, DOI and entry types. These are independent parsers, not Evidarium's own import code. They do not establish complete format conformance or a live Zotero/EndNote walkthrough.
 - The cross-platform installer check now includes actual HTTP reference preview/import, draft creation/save, numbered citation preview and screening-ledger retrieval, in addition to launching and serving the application. The first Windows run exposed a test-harness Unicode decoding error; the independent-reader subprocess now explicitly decodes UTF-8. Final run results are recorded below when available; earlier CI is not represented as evidence for the final source.
 
+**All four jobs passed** in [CI run 38565694439](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38565694439) for executable code commit `46f140c5bbcba45f826aaaeaeaf9e29e8fb3124c`: Windows, macOS and Linux runtime/installer checks, plus actual scientific engines, the R/metafor comparison and Docker execution. The platform jobs include 59 JavaScript checks, 13 Python checks, independent bibliography readers and the real installed HTTP writing/import workflow. [The machine-readable record](validation/ci-0.5.json) retains each job and step conclusion. Later documentation/download-checksum commits do not change that executable code.
+
+The deployed v0.5 server passed [six actual HTTP checks](validation/hosted-0.5.json): application version, native scientific reference operations, rejection of unauthenticated project access despite service authorization, the updated guide, and both download SHA-256 checks. This used documented Sites service authorization and supplied no visitor identity. It does not establish an authenticated browser/private-project walkthrough. The recorded ZIP hashes refer to the checked publication; subsequent documentation-only packaging may change archive hashes without changing executable code.
+
+A clean extracted local ZIP passed all 16 new workflow checks, in addition to actual application bootstrap and the existing CSV/meta-analysis/PDF reference operations.
+
 Reproduce with the documented base environment, plus test-only `rispy==0.9.0` and `bibtexparser==1.4.3`:
 
 ```sh

@@ -55,7 +55,7 @@ Import limits: 1,000 sources; 100 notes; 500 messages; 100 tasks; 500 receipts; 
 - **429/model limit:** inspect ChatGPT usage; wait or explicitly choose another available model. The app will not silently switch models.
 - **Interrupted response:** partial text is retained; send a narrower follow-up. Automatic retries are avoided because they can duplicate work or consumption.
 - **App stopped during a run:** the next startup marks its record interrupted. Prepare and approve a new run after inspecting the original.
-- **Incomplete upload:** delete the incomplete file entry and upload again. There is no automatic resume yet.
+- **Incomplete upload:** choose **Resume with original file** under Files and reselect the original. Evidarium checks previous part hashes before sending missing parts. A currently interrupted part can be retried after its two-minute reservation expires. Changed originals require a new upload; the incomplete entry can be deleted when no longer needed.
 - **Optional package missing:** install the documented engine in its isolated environment. An installation alone is not scientific validation.
 
 Stopping an app process does not guarantee every external runtime stops immediately. Cancellation kills the local worker process tree and asks Docker to remove its named container. If the operating system or Docker is unresponsive, inspect running processes/containers yourself.

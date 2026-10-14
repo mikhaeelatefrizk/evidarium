@@ -2,6 +2,10 @@
 
 See [release 0.5](release-0.5.md): 59 JavaScript checks, zero skips with a configured real Python worker; TypeScript and local build passed. [Independent bibliography readers](validation/bibliography-0.5.json) parsed actual RIS/BibTeX outputs for three fixtures. Added tests exercise manuscript conflicts, revision history and deletion, project interchange/citation remapping, import races, upload recovery and old-schema migration. Live ChatGPT inference, supported browser QA and independent researcher review remain unverified.
 
+All four jobs in [the final v0.5 CI run](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38565694439) passed: Windows/macOS/Linux application and actual installer workflows, plus scientific-engine, R reference and Docker checks. See [the job record](validation/ci-0.5.json); it includes the exact tested code commit. Each platform also passed the 13 Python checks.
+
+The [actual deployed HTTP report](validation/hosted-0.5.json) passed six checks. A clean extracted local ZIP passed all 16 new workflow checks. Service access supplies no visitor identity; private browser flows remain unverified.
+
 The previous records follow for their original release scope.
 
 # Verification record — 0.4.0

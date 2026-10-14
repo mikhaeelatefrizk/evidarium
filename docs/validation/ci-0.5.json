@@ -1,0 +1,338 @@
+{
+  "release": "0.5.0",
+  "status": "passed",
+  "code_commit": "46f140c5bbcba45f826aaaeaeaf9e29e8fb3124c",
+  "run_id": 38565694439,
+  "url": "https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38565694439",
+  "jobs": [
+    {
+      "name": "scientific-engines",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run r-lib/actions/setup-r@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install actual scientific engines",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure test worker",
+          "conclusion": "success"
+        },
+        {
+          "name": "Real approved scientific workflows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Independent website numerical reference",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build isolated Python image",
+          "conclusion": "success"
+        },
+        {
+          "name": "Real Docker execution and boundary checks",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "runtime (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install base Python requirements",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install the local server's JavaScript dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare local dependency layout and worker path",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Independent bibliography readers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Required SQLite runtime capability",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, storage, approval and real worker tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check launcher syntax on Unix",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check launcher syntax on Windows",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Install frontend build dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build actual local UI",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test the real installer and HTTP application",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "runtime (macos-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install base Python requirements",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install the local server's JavaScript dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare local dependency layout and worker path",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Independent bibliography readers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Required SQLite runtime capability",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, storage, approval and real worker tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check launcher syntax on Unix",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check launcher syntax on Windows",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Install frontend build dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build actual local UI",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test the real installer and HTTP application",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "runtime (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install base Python requirements",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install the local server's JavaScript dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare local dependency layout and worker path",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Independent bibliography readers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Required SQLite runtime capability",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, storage, approval and real worker tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check launcher syntax on Unix",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Check launcher syntax on Windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install frontend build dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build actual local UI",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test the real installer and HTTP application",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "scope": "Actual CI runtime/installer checks on Windows, macOS and Linux, independent bibliography readers, scientific-engine/reference and Docker checks. Not browser QA, live ChatGPT account inference, scientific peer review or a security certification."
+}
