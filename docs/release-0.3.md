@@ -30,7 +30,9 @@
 
 PySR 2.7.0 / Julia 1.13.1 completed both fits despite an initialization error from the optional SymbolicRegression PythonCall extension. This remains an environment-compatibility limitation; a clean universal Julia installation is not claimed. PySR/Docling can download several GiB. Engines and model weights are not bundled into the normal download.
 
-Machine-readable results are in [validation](validation/). The cross-platform installation run is [38551401788](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38551401788), commit `5c5653ed91c7e2e920ceaea235c2908e47fee4c8`. Scientific/Docker checks passed in [38551656487](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38551656487), commit `7d4fcdd48e31605c0d562f077c857682d3f451a9`. These identify the code actually run; future commits do not automatically inherit a passing result.
+Machine-readable results are in [validation](validation/). The cross-platform installation run is [38551401788](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38551401788), commit `5c5653ed91c7e2e920ceaea235c2908e47fee4c8`. Scientific/Docker checks passed in [38551656487](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38551656487), commit `7d4fcdd48e31605c0d562f077c857682d3f451a9`. The final account-check code passed all three platform installation jobs in [38553322453](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/38553322453), commit `add728bbbf82c521fcc91a34eb5899dcd8ec9f36`. These identify the code actually run; future commits do not automatically inherit a passing result.
+
+The optional-engine installer also completed a fresh ASReview installation on Linux, then executed the same 3,453-record verification using its registered interpreter. The packaged local ZIP was extracted into a clean directory and successfully initialized the actual v0.3 application and database.
 
 ## Reproduce the checks
 
@@ -60,7 +62,7 @@ The equivalent CLI is `scripts/verify-live.mjs`. Neither path reads/exports OAut
 
 ## Remaining blockers
 
-1. **Hosted ChatGPT plan inference:** disabled. [OpenAI's official overview](https://developers.openai.com/siwc/token-sharing-open-source) directs paid/remotely hosted apps to its approval process. Website identity grants no inference allowance. No API-billing substitution or local-token bridge is implemented.
+1. **Hosted ChatGPT plan inference:** disabled. [OpenAI's official overview](https://developers.openai.com/siwc/token-sharing-open-source) directs paid/remotely hosted apps to its approval process. Website identity grants no inference allowance. No API-billing substitution or local-token bridge is implemented. An [owner review brief](hosted-inference-request.md) is prepared; it has not been submitted.
 2. **Live sign-in, inference, refresh and revocation:** require real account consent and a supported desktop credential store. The development environment has no secure desktop keyring. No credentials/cookies were borrowed to claim success.
 3. **PaperQA2, OpenScholar and Biomni:** remain experimental and unverified with actual chosen models and representative datasets. Adapter presence is not a tested capability promise.
 4. **Browser interaction/accessibility:** the Sites workflow lacked its supported browser-control capability. Rendering, keyboard interaction and complete hosted sign-in remain unverified in a supported browser.

@@ -1,15 +1,15 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "artifacts": [
     {
       "file": "evidarium-source.zip",
-      "bytes": 336130,
-      "sha256": "468e41c2b50d9b0efe823a73ba8caf7239e9c6ee385022504a6dbee4bab98730"
+      "bytes": 371187,
+      "sha256": "e6df929dcd831954bca2a32e4965b7fcecb905a5d43ca01e079b21fce47ae395"
     },
     {
       "file": "evidarium-local.zip",
-      "bytes": 497990,
-      "sha256": "68f72ca9f5d16a36c18999547eafa3cd19d8fe2bc8f422f9e57c8b9b035d80a8"
+      "bytes": 535768,
+      "sha256": "1dedc54340abfb4637e391df8deb3135fef5e91523843d9e4609fe82a0c0444a"
     }
   ]
 }
