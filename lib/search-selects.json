@@ -4,5 +4,6 @@
   "notes": "SELECT notes.project,'note',id,'note','Research note',content FROM notes WHERE notes.project=?",
   "tasks": "SELECT tasks.project,'analysis',id,'result',kind,COALESCE(result,'') FROM tasks WHERE tasks.project=? AND state IN ('completed','imported') AND kind!='chat'",
   "claims": "SELECT claims.project,'claim',id,location,statement,statement||' '||quote FROM claims WHERE claims.project=?",
-  "files": "SELECT files.project,'file',files.id,json_extract(j.value,'$.location'),name,json_extract(j.value,'$.text') FROM files JOIN json_each(CASE WHEN json_valid(extracted) THEN extracted ELSE '{}' END,'$.segments') j WHERE files.project=? AND json_valid(extracted)"
+  "files": "SELECT files.project,'file',files.id,json_extract(j.value,'$.location'),name,json_extract(j.value,'$.text') FROM files JOIN json_each(CASE WHEN json_valid(extracted) THEN extracted ELSE '{}' END,'$.segments') j WHERE files.project=? AND json_valid(extracted)",
+  "manuscript": "SELECT project,'manuscript',id,'draft',title,content FROM manuscripts WHERE project=?"
 }

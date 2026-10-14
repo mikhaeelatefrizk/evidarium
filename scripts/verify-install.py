@@ -31,7 +31,23 @@ def main():
                 with urllib.request.urlopen(req,timeout=10) as r:p=json.load(r)
                 with urllib.request.urlopen(origin+'/api/projects/'+p['id']+'/export',timeout=10) as r:export=json.load(r)
                 assert export['project']['title']=='Installer verification'
-                print(json.dumps({'status':'passed','platform':sys.platform,'python':sys.version.split()[0],'checks':['real launcher','dependency installation','bootstrap','production UI asset served','project creation','project export'],'scope':'HTTP installation check; no browser, OAuth, or model inference'}))
+                def request(route, body=None, method=None):
+                    req=urllib.request.Request(origin+'/api/'+route,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json'},method=method or ('POST' if body is not None else 'GET'))
+                    with urllib.request.urlopen(req,timeout=10) as response:return json.load(response)
+                prefix='projects/'+p['id']
+                bibliography={'format':'csl-json','text':json.dumps([{'title':'Installer reference','type':'article-journal','DOI':'10.1234/install-check','author':[{'family':'Example','given':'A'}],'issued':{'date-parts':[[2024]]}}])}
+                preview=request(prefix+'/bibliography/preview',bibliography)
+                imported=request(prefix+'/bibliography/import',{**bibliography,'sha256':preview['sha256']})
+                assert imported['added']==1
+                source=request(prefix)['sources'][0]
+                draft=request(prefix+'/manuscripts',{'title':'Installer draft'})
+                text='A reproducible observation [S:'+source['id']+'].'
+                saved=request(prefix+'/manuscripts/'+draft['id'],{'title':draft['title'],'content':text,'revision':1},'PUT')
+                assert saved['revision']==2
+                rendered=request(prefix+'/manuscripts/'+draft['id']+'/preview',{'title':draft['title'],'content':text})
+                assert rendered['references'][0]['id']==source['id'] and not rendered['issues']
+                assert request(prefix+'/screening-ledger')['total_records']==1
+                print(json.dumps({'status':'passed','platform':sys.platform,'python':sys.version.split()[0],'checks':['real launcher','dependency installation','bootstrap','production UI asset served','project creation','project export','bibliography preview and import','draft save and numbered citation preview','screening ledger'],'scope':'HTTP installation check; no browser, OAuth, or model inference'}))
             finally:
                 if process.poll() is None:
                     if os.name=='nt':subprocess.run(['taskkill','/pid',str(process.pid),'/T','/F'],capture_output=True)

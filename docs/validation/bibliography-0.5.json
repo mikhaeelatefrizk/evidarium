@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "cases": 3,
+  "readers": {
+    "rispy": "0.9.0",
+    "bibtexparser": "1.4.3"
+  },
+  "checks": [
+    "RIS independently parsed with expected authors, titles, dates, DOI and book type",
+    "BibTeX independently parsed with expected entry count, authors, titles, dates, DOI and book type",
+    "CSL structured author data preserved"
+  ],
+  "scope": "Bounded interchange fixtures. Not a Zotero/EndNote browser test, exhaustive format conformance, or journal-style validation."
+}

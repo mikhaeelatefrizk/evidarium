@@ -43,6 +43,13 @@
       "when": 1791936771857,
       "tag": "0005_project_search",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791979200000,
+      "tag": "0006_research_writing",
+      "breakpoints": true
     }
   ]
 }

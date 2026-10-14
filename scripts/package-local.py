@@ -31,5 +31,5 @@ def archive(name,local):
     return {'file':name,'bytes':dest.stat().st_size,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest()}
 if not (ROOT/'dist-local'/'index.html').is_file():raise SystemExit('Build the local UI before packaging.')
 results=[archive('evidarium-source.zip',False),archive('evidarium-local.zip',True)]
-(OUT/'checksums.json').write_text(json.dumps({'version':'0.4.0','artifacts':results},indent=2)+'\n')
+(OUT/'checksums.json').write_text(json.dumps({'version':'0.5.0','artifacts':results},indent=2)+'\n')
 print(json.dumps(results,indent=2))

@@ -75,3 +75,8 @@ Runtime launchers probe SQLite FTS5 before opening user data. CI checks actual W
 Final results, extraction updates and completion records use a database batch. Compare-and-set transitions prevent double approval and discard a result if cancellation won. Platform termination can still leave an interrupted request recorded as running; this release has no durable hosted job queue or automatic retries. Dataset bounds are distinct from the larger original-file storage bounds. PDF page/character limits and missing text produce explicit partial coverage.
 
 The public reference route runs only pinned public fixtures. It demonstrates actual deployed computation, not authenticated browser behavior or private storage validation.
+
+
+## Writing and interchange (0.5)
+
+`references.mjs` parses bounded bibliographic imports and formats metadata exports offline. `research-workflow.mjs` owns private import, draft and screening routes; reference write locks prevent racing imports. `manuscripts.mjs` escapes print output and resolves only project-owned source tokens. Save/revision/audit writes share a database batch and a revision/token guard. Manuscripts join the FTS index; rebuilding revision 2 retains the earlier record types. `upload-recovery.mjs` replaces read/overwrite JSON manifests with per-part rows, hash-preserving write reservations and idempotent completion recovery. `upload-client.mjs` verifies previous part hashes before sending more bytes. Native browser input is still required to reselect a file.

@@ -4,7 +4,13 @@
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.4.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.5.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+
+## New in 0.5: references and writing on the website
+
+**Writing & references** now provides previewed RIS/CSL JSON imports, duplicate preservation, CSL JSON/RIS/BibTeX exports, a saved manuscript editor with citation insertion, numbered bibliography previews, revision conflict protection/history, HTML/Markdown exports, and a screening ledger retaining decisions from earlier stages. Interrupted uploads can be resumed by reselecting the original file after part-hash verification. These workflows run in both editions without model access.
+
+The release passed 59 JavaScript checks and independent RIS/BibTeX reader checks. See [release 0.5](docs/release-0.5.md) for the actual evidence and limits. Hosted AI is still disabled; these additions do not establish a complete thesis environment or validated scientific judgment.
 
 ## New in 0.4: real website computation
 
@@ -50,7 +56,7 @@ An exact quote match proves text presence, not scientific truth. An execution re
 | Evidence receipts | Abstracts and imported article passages | Abstracts and extracted passages |
 | ChatGPT plan inference | **Not enabled** | Official open-source local-app OAuth flow |
 | Scientific computation | Native CSV / REML meta-analysis / PDF and text extraction | Same native engines plus approved Python/R/optional engines |
-| Project interchange | JSON and CSV | Same format; originals separately |
+| Project interchange | JSON, screening CSV, RIS, BibTeX, CSL JSON, drafts | Same formats; originals separately |
 | Automatic cloud/local sync | **Not implemented** | Import/export only |
 
 The local edition is a complete standalone application served on `http://127.0.0.1:4317`. It is not an authorization bridge for the hosted site. ChatGPT identity used to sign in to a website is distinct from permission to consume a ChatGPT plan. The official local open-source flow does not automatically authorize a remote hosted service. Hosted plan inference requires the appropriate OpenAI approval and integration.
@@ -144,8 +150,10 @@ The worker test is skipped without an explicitly provided Python environment. No
 
 ## Explicit limits
 
+- Bibliography import: 1 MiB / 200 records; RIS and the documented CSL JSON subset. Manuscripts: 20 per project, 200,000 characters each, latest 50 saved revisions. Basic numbered bibliography only; not journal-specific formatting.
+
 - File storage: **2 GiB per file**, **200 files per project**, **8 GiB per account** in this release. Any byte format can be stored within those bounds; only documented formats can be extracted.
-- Uploads: 8 MiB parts checked with SHA-256. Interrupted uploads remain visible and removable; automatic resume is not implemented.
+- Uploads: 8 MiB parts checked with SHA-256. Interrupted uploads remain visible and removable; reselect the original file to verify its stored-part hashes and resume missing parts. The browser does not retain file handles between visits.
 - Extraction: default 300 PDF pages, 10,000 spreadsheet rows per sheet, and 2,000,000 extracted characters. Coverage warnings are retained. These are practical bounds, not model context promises.
 - CSV calculations: maximum 100,000 rows; PySR uses at most 20,000 rows/15 features. Bounds reject unsupported calculations rather than quietly analyzing a truncated dataset.
 - Conversation input: at most 24 recent messages/48,000 characters plus selected evidence. Model retrieval returns up to 12 FTS5 BM25 matches across indexed project history; this is not comprehensive semantic memory. The human search interface loads 20 matches per page.
@@ -156,7 +164,7 @@ The worker test is skipped without an explicitly provided Python environment. No
 
 ## What is not implemented
 
-Institutional multi-user collaboration, automatic distributed/cloud compute rental, full citation-manager interoperability, journal submission, complete qualitative-analysis workflows, a LaTeX thesis IDE, general audio/video transcription, autonomous wet-lab work, guaranteed discovery, universal parsing, cryptographically tamper-proof audit logs, automatic project sync, and approved hosted ChatGPT plan inference are not implemented. There are no buttons claiming these capabilities work.
+Institutional multi-user collaboration, automatic distributed/cloud compute rental, complete citation-manager synchronization/Word integration, journal submission, complete qualitative-analysis workflows, a LaTeX thesis IDE, general audio/video transcription, autonomous wet-lab work, guaranteed discovery, universal parsing, cryptographically tamper-proof audit logs, automatic project sync, and approved hosted ChatGPT plan inference are not implemented. There are no buttons claiming these capabilities work.
 
 A website permission prompt alone cannot grant arbitrary access to a person's computer. The standalone application and per-task approval are the concrete execution mechanism used here.
 

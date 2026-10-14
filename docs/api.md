@@ -60,3 +60,24 @@ Project reads return the latest 100 messages and `message_page`. Project JSON ex
 `POST /api/tasks/:id/approve` rechecks ownership, version and bytes, claims the pending task once, executes a bounded native calculation and returns its actual state. `POST /api/tasks/:id/cancel` cancels a pending/running record. Completed output and extraction are committed together with completion audit/message records. Approval is not silently retried. A request interrupted by platform failure may leave a running record; inspect/cancel it and prepare a new proposal.
 
 `GET /api/science-check` is public and readonly: it executes three fixed public reference checks, never accepts a user file, and never reads private project data. It is a deployment diagnostic, not account-flow or scientific validation.
+
+
+## References, manuscripts and upload recovery (0.5)
+
+All project paths below require the authenticated owner. Unsafe methods retain origin checks.
+
+| Method | Route | Behavior |
+|---|---|---|
+| POST | `/api/projects/:id/bibliography/preview` | `{format: "ris" or "csl-json", text}` → parsed preview, duplicate counts, SHA-256; no imported sources |
+| POST | `/api/projects/:id/bibliography/import` | Same body plus preview `sha256`; serialized atomic import, original decisions retained |
+| GET | `/api/projects/:id/bibliography?format=csl-json` | Export; also `ris` or `bibtex` |
+| GET | `/api/projects/:id/manuscripts` | Draft summaries |
+| POST | `/api/projects/:id/manuscripts` | `{title}` → saved empty draft, revision 1 |
+| GET / PUT / DELETE | `/api/projects/:id/manuscripts/:document` | Read; save `{title,content,revision}` with optimistic concurrency; or delete draft and revisions |
+| GET | `/api/projects/:id/manuscripts/:document/revisions` | Latest 50 saved revision summaries; append `/:revision` to read one |
+| POST | `/api/projects/:id/manuscripts/:document/preview` | `{title,content}` → safe HTML, numbered bibliography, citation warnings; no save |
+| GET | `/api/projects/:id/manuscripts/:document/export?format=html` | Saved version export; also `markdown` or `source` |
+| GET | `/api/projects/:id/screening-ledger` | Recorded stage decisions, searches and import events; `?format=csv` for stage rows |
+| GET | `/api/files/:id/upload-status` | Name, size, state, part size and checked/reserved part hashes; no storage key or upload credential |
+
+A 409 on manuscript save means the supplied revision lost a race; preserve the user's draft before reloading. Imported project manuscripts receive new IDs and revision 1; references are remapped, history is not reconstructed. Multipart completion is idempotent for stored files; an interrupted `completing` state can be retried. In-flight part reservations expire after two minutes, reference import locks after five minutes. No automatic background worker or hosted job queue is implied.
