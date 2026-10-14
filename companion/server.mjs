@@ -49,6 +49,8 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
   preparingAnalysis=true;try{
   if(t.state!=='awaiting_approval')throw new AppError('Only a pending task can be approved.',409);
   if([...running.values()].some(x=>x.kind!=='chat'))throw new AppError('One analysis is already running. Finish or cancel it first.',409);
+  // Validate installation before moving a proposal to running.
+  enginePython(dataRoot,t.kind,python);
   const args=JSON.parse(t.args);let snapshot=null;
   if(args.file_id){const f=await first(db,'SELECT * FROM files WHERE id=? AND project=?',args.file_id,t.project);if(!f)throw new AppError('Input file was removed.');const source=bucket.filepath(f.key);if(await sha256File(source)!==args.input_sha256)throw new AppError('The input changed since the task was proposed. Prepare a new task.');const dir=path.join(dataRoot,'jobs',t.id);await mkdir(dir,{recursive:true,mode:0o700});snapshot=path.join(dir,'input'+path.extname(f.name));await copyFile(source,snapshot);args._file_name=f.name}
   args._task_id=t.id;const p=await projectFor(db,t.project,'local');const payload={command:'tool',kind:t.kind,args,path:snapshot,project:await projectData(db,p)};

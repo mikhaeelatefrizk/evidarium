@@ -50,3 +50,11 @@ jobs:
           $errors = $null
           [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'start-windows.ps1'), [ref]$null, [ref]$errors) | Out-Null
           if ($errors) { throw ($errors | Out-String) }
+      - name: Install frontend build dependencies
+        run: |
+          npm install -g pnpm@11.25.0
+          pnpm install --frozen-lockfile
+      - name: Build actual local UI
+        run: pnpm build:local
+      - name: Test the real installer and HTTP application
+        run: python scripts/verify-install.py

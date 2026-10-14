@@ -3,13 +3,13 @@ import hashlib,json,os,zipfile,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'public'/'downloads';OUT.mkdir(parents=True,exist_ok=True)
-SKIP={'.git','node_modules','.venv','__pycache__','.sites-runtime','.agents','.codex','.wrangler','.next','.vinext','dist','dist-local','downloads','outputs','work','coverage','upload'}
+SKIP={'.git','node_modules','.venv','__pycache__','.sites-runtime','.agents','.codex','.wrangler','.next','.vinext','dist','dist-local','downloads','outputs','work','coverage','upload','.ci-deps'}
 def source_files():
     for folder,dirs,files in os.walk(ROOT):
         dirs[:]=sorted(d for d in dirs if d not in SKIP)
         for name in sorted(files):
             p=Path(folder)/name
-            if p.is_symlink() or name.startswith('.env') or p.suffix in {'.pyc','.pem','.gguf','.sqlite','.sqlite3','.db','.log','.tsbuildinfo'} or name in {'identity.json','server.lock','next-env.d.ts'}:continue
+            if p.is_symlink() or name.startswith('.env') or p.suffix in {'.pyc','.pem','.gguf','.sqlite','.sqlite3','.db','.log','.tsbuildinfo'} or name in {'identity.json','server.lock','next-env.d.ts','live-verification.json'}:continue
             yield p
 
 def archive(name,local):
@@ -31,5 +31,5 @@ def archive(name,local):
     return {'file':name,'bytes':dest.stat().st_size,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest()}
 if not (ROOT/'dist-local'/'index.html').is_file():raise SystemExit('Build the local UI before packaging.')
 results=[archive('evidarium-source.zip',False),archive('evidarium-local.zip',True)]
-(OUT/'checksums.json').write_text(json.dumps({'version':'0.2.0','artifacts':results},indent=2)+'\n')
+(OUT/'checksums.json').write_text(json.dumps({'version':'0.3.0','artifacts':results},indent=2)+'\n')
 print(json.dumps(results,indent=2))

@@ -64,3 +64,7 @@ __pycache__/
 *.gguf
 *.tsbuildinfo
 /dist-local/
+
+# Local verification outputs
+/.ci-deps/
+/live-verification.json

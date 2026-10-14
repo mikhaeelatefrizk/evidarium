@@ -12,7 +12,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Python 3.11+ is required.' }
 $requirementsChanged = -not (Test-Path '.venv/evidarium-requirements.txt')
 if (-not $requirementsChanged) { $requirementsChanged = (Get-FileHash companion/requirements.txt).Hash -ne (Get-FileHash .venv/evidarium-requirements.txt).Hash }
 if ($requirementsChanged) {
-  Write-Host 'Installing the Python packages listed in companion/requirements.txt in this folder’s virtual environment.'
+  Write-Host 'Installing the Python packages listed in companion/requirements.txt in the application virtual environment.'
   & ./.venv/Scripts/python.exe -m pip install -r companion/requirements.txt
   if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed. Review the preceding error.' }
   Copy-Item companion/requirements.txt .venv/evidarium-requirements.txt

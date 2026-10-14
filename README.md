@@ -47,7 +47,7 @@ The real account-specific model catalog is fetched after authorization. The sele
 
 ## Run the local release
 
-1. Install **Node.js 22.13+** and **Python 3.11+** from their official vendors.
+1. Install **Node.js 24.19+** and **Python 3.11+** from their official vendors.
 2. Download and extract `evidarium-local.zip` from the link above.
 3. macOS/Linux: run `bash start.sh`. Windows: run `./start-windows.ps1` from PowerShell. If your system policy blocks scripts, follow your organization's approved procedure; you can also run the documented commands in [Local setup](docs/local-setup.md) individually.
 4. Keep the terminal open. The app opens the loopback URL above.
