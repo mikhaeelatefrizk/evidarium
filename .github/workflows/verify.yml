@@ -39,7 +39,7 @@ jobs:
       - name: Required SQLite runtime capability
         run: node scripts/check-runtime.mjs
       - name: HTTP, storage, approval and real worker tests
-        run: node --test tests/workspace.test.mjs tests/research.test.mjs tests/runtime.test.mjs tests/worker.test.mjs
+        run: node --test tests/workspace.test.mjs tests/research.test.mjs tests/runtime.test.mjs tests/worker.test.mjs tests/live-check.test.mjs
       - name: Check launcher syntax on Unix
         if: runner.os != 'Windows'
         run: bash -n start.sh

@@ -1,8 +1,8 @@
 """Install one optional engine in its own environment; never stores model credentials."""
-import argparse, json, os, subprocess, sys, time
+import argparse, json, os, subprocess, sys, time, tempfile, shutil
 from pathlib import Path
 
-KINDS={'asreview':'screen_rank','indra':'mechanism_graph','pysr':'symbolic_regression'}
+KINDS={'asreview':'screen_rank','indra':'mechanism_graph','pysr':'symbolic_regression','docling':'docling'}
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
@@ -23,8 +23,10 @@ def main():
     try:fd=os.open(install_lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
     except FileExistsError:raise SystemExit('Another engine installation is active. If it crashed, remove engine-install.lock after confirming no installer is running.')
     os.close(fd)
+    env=None;installed=False
     try:
-        env=data/'engines'/args.engine
+        env_root=data/'engines';env_root.mkdir(exist_ok=True,mode=0o700)
+        env=Path(tempfile.mkdtemp(prefix=args.engine+'-',dir=env_root))
         subprocess.run([sys.executable,'-m','venv',str(env)],check=True)
         python=env/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
         subprocess.run([str(python),'-m','pip','install','--disable-pip-version-check','--no-input','-r',str(ROOT/'companion/engines'/f'{args.engine}.txt')],check=True)
@@ -33,7 +35,10 @@ def main():
         values=json.loads(config.read_text()) if config.exists() else {}
         values[KINDS[args.engine]]={'python':str(python),'installed_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
         temp=config.with_suffix('.tmp');temp.write_text(json.dumps(values,indent=2)+'\n');os.chmod(temp,0o600);os.replace(temp,config)
+        installed=True
         print(f'{args.engine} installed in a separate environment. Restart Evidarium. Installation is not a scientific validation.')
-    finally:install_lock.unlink(missing_ok=True)
+    finally:
+        if env and not installed:shutil.rmtree(env,ignore_errors=True)
+        install_lock.unlink(missing_ok=True)
 
 if __name__=='__main__':main()

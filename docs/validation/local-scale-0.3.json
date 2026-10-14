@@ -1,0 +1,10 @@
+{
+  "scope": "Synthetic local load check, not concurrency or production capacity certification",
+  "messages": 20000,
+  "ingest_ms": 709.457784,
+  "retrieve_ms": 257.3135829999999,
+  "latest_page_ms": 44.625095999999985,
+  "database_bytes": 34095104,
+  "node": "v24.19.0",
+  "platform": "linux"
+}

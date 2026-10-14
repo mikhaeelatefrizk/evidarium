@@ -31,4 +31,12 @@ class ScienceTests(unittest.TestCase):
                 with self.subTest(text=text):
                     p.write_text(text)
                     with self.assertRaises(ValueError):read_csv(str(p))
+    def test_native_word_and_spreadsheet_values_are_read_from_real_files(self):
+        from docx import Document
+        from openpyxl import Workbook
+        with tempfile.TemporaryDirectory() as d:
+            word=Path(d)/'evidence.docx';doc=Document();doc.add_paragraph('A measured concentration of 12.5 units.');doc.save(word)
+            extracted=extract(str(word),{});self.assertIn('12.5',extracted['segments'][0]['text']);self.assertTrue(extracted['warnings'])
+            book=Path(d)/'data.xlsx';wb=Workbook();wb.active.append(['measurement','value']);wb.active.append(['concentration',12.5]);wb.save(book);wb.close()
+            extracted=extract(str(book),{});self.assertIn('concentration\t12.5',extracted['segments'][0]['text']);self.assertTrue(extracted['warnings'])
 if __name__=='__main__':unittest.main()

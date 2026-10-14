@@ -22,7 +22,8 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
  const db=createDB(path.join(dataRoot,'research.sqlite'),path.join(base,'drizzle')),bucket=createBucket(path.join(dataRoot,'files'));
  const user={userId:'local',displayName:'Local researcher'};const running=new Map();let loginJob=null,statusCache=null,statusAt=0,statusJob=null;let preparingAnalysis=false,preparingChat=false;
  db.raw.exec("UPDATE tasks SET state='interrupted',error='The local app stopped before execution completed. Review and prepare a new task.',updated="+now()+" WHERE state IN ('running','queued'); UPDATE messages SET status='partial' WHERE status='streaming';");
- function invoke(payload,onEvent){const selected=payload.command==='tool'?enginePython(dataRoot,payload.kind,python):python;return worker({python:selected,dataRoot,payload,onEvent})}
+ const taskPython=(kind,args)=>enginePython(dataRoot,kind==='extract'&&args?.engine==='docling'?'docling':kind,python);
+ function invoke(payload,onEvent){const selected=payload.command==='tool'?taskPython(payload.kind,payload.args):python;return worker({python:selected,dataRoot,payload,onEvent})}
  async function status(){if(loginJob)return {connected:false,models:[],pending:true,url:loginJob.url};if(statusCache&&now()-statusAt<30000)return statusCache;if(!statusJob)statusJob=invoke({command:'status'}).promise.then(result=>{statusCache=result;statusAt=now();return result}).catch(e=>({connected:false,models:[],error:e.message})).finally(()=>{statusJob=null});return statusJob}
  async function prepare(p,kind,args,origin='human'){
   if(!KINDS.includes(kind))throw new AppError('Unknown analysis engine.');if(!args||typeof args!=='object'||Array.isArray(args))throw new AppError('Task parameters must be a JSON object.');
@@ -50,7 +51,7 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
   if(t.state!=='awaiting_approval')throw new AppError('Only a pending task can be approved.',409);
   if([...running.values()].some(x=>x.kind!=='chat'))throw new AppError('One analysis is already running. Finish or cancel it first.',409);
   // Validate installation before moving a proposal to running.
-  enginePython(dataRoot,t.kind,python);
+  taskPython(t.kind,JSON.parse(t.args));
   const args=JSON.parse(t.args);let snapshot=null;
   if(args.file_id){const f=await first(db,'SELECT * FROM files WHERE id=? AND project=?',args.file_id,t.project);if(!f)throw new AppError('Input file was removed.');const source=bucket.filepath(f.key);if(await sha256File(source)!==args.input_sha256)throw new AppError('The input changed since the task was proposed. Prepare a new task.');const dir=path.join(dataRoot,'jobs',t.id);await mkdir(dir,{recursive:true,mode:0o700});snapshot=path.join(dir,'input'+path.extname(f.name));await copyFile(source,snapshot);args._file_name=f.name}
   args._task_id=t.id;const p=await projectFor(db,t.project,'local');const payload={command:'tool',kind:t.kind,args,path:snapshot,project:await projectData(db,p)};

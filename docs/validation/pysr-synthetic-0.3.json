@@ -1,0 +1,37 @@
+{
+  "result": {
+    "equation": "x0*1.9136429 - (x0*(-0.08635712) - 3.0)",
+    "features": [
+      "x"
+    ],
+    "target": "y",
+    "held_out_rmse": 5.6261887444973544e-08,
+    "train_rows": 80,
+    "test_rows": 20,
+    "split_seed": 42,
+    "note": "A fitted candidate equation is not an established causal law; random holdout may be inappropriate for grouped or time-series data."
+  },
+  "provenance": {
+    "engine": "symbolic_regression",
+    "parameters": {
+      "features": [
+        "x"
+      ],
+      "target": "y",
+      "iterations": 5
+    },
+    "started_at": "2026-10-14T10:39:14Z",
+    "python": "3.12.14",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "origin": "local-computation",
+    "verification": "execution recorded; scientific interpretation requires review",
+    "input_sha256": "1e479559f291ae1594269ee4fb6e0bd9df8a79f78298f62e8a9f639e0b37c7cf",
+    "input_bytes": 1303,
+    "elapsed_seconds": 22.729,
+    "package_versions": {
+      "numpy": "2.3.5",
+      "pysr": "2.7.0"
+    }
+  },
+  "verification_scope": "Actual bounded PySR execution. An optional Julia PythonCall extension logged an initialization error; core model fit and predictions completed. Not a performance certification or a validated scientific finding."
+}

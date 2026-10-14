@@ -1,0 +1,41 @@
+{
+  "engine": "asreview",
+  "scope": "One fixed-seed ranking. No guarantee of recall; final inclusion labels used as seeds.",
+  "dataset_sha256": "456f9306b0ce1aee840ac0244f11df3b2a168aa46007a92f5dcf59916d309a69",
+  "records": 3453,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    82,
+    94,
+    129,
+    133
+  ],
+  "ranked": 3443,
+  "remaining_inclusions": 24,
+  "included_in_top_100": 13,
+  "ranking_sha256": "e0b0cef3d412fe3743aee406491e2b2a6743dcef9048f9960b06acb40fa96639",
+  "provenance": {
+    "engine": "screen_rank",
+    "parameters": {
+      "stage": "title_abstract"
+    },
+    "started_at": "2026-10-14T10:45:05Z",
+    "python": "3.12.14",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "origin": "local-computation",
+    "verification": "execution recorded; scientific interpretation requires review",
+    "elapsed_seconds": 1.725,
+    "package_versions": {
+      "numpy": "2.3.5",
+      "pypdf": "6.10.0",
+      "asreview": "3.0.8",
+      "indra": "1.24.0"
+    }
+  },
+  "status": "passed"
+}

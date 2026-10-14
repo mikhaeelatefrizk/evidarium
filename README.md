@@ -4,16 +4,18 @@
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.2.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.3.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
 
-## New in 0.2
+## New in 0.3
 
-- Import open-access article XML with source identifiers, extraction coverage, license metadata, and a whole-file fingerprint.
-- Search indexed project history and extracted passages; earlier messages are no longer excluded by a 2,000-turn retrieval cutoff.
-- Inspect automated citation access reports on completed local model responses.
-- Load older conversation pages without loading the entire chat on every refresh.
+- Fixed ASReview's real input contract, INDRA agent identity collisions and dropped-statement handling, CSV ambiguity, and meta-analysis output precision.
+- Separate optional-engine environments prevent dependency conflicts with authorization and other engines.
+- Real metafor, ASReview and INDRA approval-to-export workflows; bounded PySR and Docling execution checks; Docker execution and declared-boundary checks.
+- Windows, macOS and Linux CI covers the real launcher, dependency installation, built UI delivery, project creation and export.
+- Local **Verify this connected workflow** runs an account-specific check with actual files, computations, two cited chat turns and export. It requires explicit consent and does not fabricate a passing result. Live OAuth/inference is still unverified by the developer.
+- Corrected the runtime requirement to **Node.js 24.19+ with SQLite FTS5**. Node 22.13 failed real cross-platform tests. Startup now checks the actual capability before migrating research data.
 
-See the [release mechanism, live test, and remaining limits](docs/release-0.2.md).
+See the [release evidence and remaining blockers](docs/release-0.3.md) and [previous evidence-retrieval release](docs/release-0.2.md).
 
 ## The central idea
 
@@ -68,21 +70,21 @@ The release contains prebuilt local UI assets; no frontend build is needed to us
 
 ## Scientific engines
 
-All adapters call actual packages or runtimes. Missing dependencies produce errors, not simulated research results. **Optional adapters have not passed end-to-end scientific validation in this release.** They are explicitly experimental and require independent evaluation before relying on their outputs.
+All adapters call actual packages or runtimes. Missing dependencies produce errors, not simulated research results. Several adapters now have bounded execution and reference checks, listed in the release record. **None has broad independent scientific validation.** Research interpretation still requires qualified review.
 
 | Engine | Actual operation | Status and constraints |
 |---|---|---|
-| Base extraction | pypdf, python-docx, openpyxl, UTF-8 text readers | Text and CSV execution tested; format-specific coverage reported. No default OCR or image interpretation. |
+| Base extraction | pypdf, python-docx, openpyxl, UTF-8 text readers | Text, CSV, DOCX and XLSX execution tested; format-specific coverage reported. No default OCR or image interpretation. |
 | Descriptive CSV analysis | NumPy finite-number summaries | Tested against a hand-computed reference and through the real worker protocol. |
-| Docling | Structured document conversion through `DocumentConverter` | Optional; select `engine: "docling"`; additional models/resources may download. |
-| metafor | R random-effects REML meta-analysis, Knapp–Hartung inference | Optional R adapter; requires sampling variances and explicit independent-effects confirmation. Not arbitrary meta-analysis. |
-| ASReview | Learning from included/excluded labels, ranking remaining records | Optional; preserves human decisions and screening stage. Does not certify recall. |
-| PySR | Symbolic regression, fixed-seed train/test split | Optional Julia dependency; candidate equations are not established laws. |
-| INDRA | Parse supplied INDRA statement JSON into mechanistic claim data | Optional; does not pretend a mechanistic reader is installed or that claims are experimentally validated. |
+| Docling | Structured document conversion through `DocumentConverter` | DOCX prose/table fixture passed; OCR and complex PDFs remain unverified. Additional models/resources may download. |
+| metafor | R random-effects REML meta-analysis, Knapp–Hartung inference | Published 13-study reference and independent numerical calculation agree. Requires sampling variances and explicit independence confirmation. |
+| ASReview | Learning from included/excluded labels, ranking remaining records | Real 3,453-record dataset processed; approval workflow checked. Preserves decisions; does not certify recall. |
+| PySR | Symbolic regression, fixed-seed train/test split | Known-equation and 442-row real-data fits executed. Julia runtime setup remains substantial; equations are not established laws. |
+| INDRA | Parse supplied INDRA statement JSON into mechanistic claim data | Synthetic representation/identity/rejection checks passed. No bundled PDF-to-mechanism reader or biological validation. |
 | PaperQA2 | `Docs` ingestion/query with an explicitly configured local Ollama model | Optional; separate specialist model, not ChatGPT subscription inference. |
 | OpenScholar | Its upstream `run.py` in a configured local GPU environment | Experimental; requires upstream input schema, model weights, and runtime. |
 | Biomni | A1 inside a configured offline Docker worker with a local model | Experimental recipe; heavy environment and suitable model required. Network-dependent tools cannot work offline. |
-| Custom Python | Reviewed code in a constrained Docker container | Network disabled, read-only root, limited CPU/memory/processes/time; optional image must be built first. |
+| Custom Python | Reviewed code in a constrained Docker container | Real Docker test passed for execution, disabled network, read-only root, artifacts and image identity. Not a security certification. |
 
 See [engine contracts and exact parameters](docs/engines.md). We do not present optional installations as verified ready-to-use capabilities.
 
@@ -118,7 +120,7 @@ The release checks include:
 - Python tests for known CSV results, extraction, bounded ingestion, unknown-engine rejection, and streamed-event parsing.
 - A real Python worker subprocess computing a known CSV result.
 
-These are not live OAuth, GPU, R, Docker, accessibility, cross-browser, load, penetration, or scientific-validation certifications. The development environment does not provide supported browser QA for this Site. See [verification record](docs/verification.md) for exact results and remaining gates.
+The release includes bounded R/Docker checks and a synthetic 20,000-message load check. These are not live OAuth, GPU, accessibility, cross-browser, concurrency, penetration, or scientific-validation certifications. The development environment does not provide supported browser QA for this Site. See [verification record](docs/verification.md) for exact results and remaining gates.
 
 ```bash
 node --test tests/*.test.mjs

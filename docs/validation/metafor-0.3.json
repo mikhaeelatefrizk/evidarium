@@ -1,0 +1,61 @@
+{
+  "engine": "metafor",
+  "scope": "Bounded engineering/reference check; not independent researcher review.",
+  "reference": {
+    "estimate": -0.7145323420065867,
+    "tau2": 0.31324325647995604,
+    "se": 0.18079174405802378,
+    "ci_lower": -1.1084437134581229,
+    "ci_upper": -0.3206209705550505
+  },
+  "absolute_differences": {
+    "estimate": 6.358514714754904e-09,
+    "tau2": 6.950093917046374e-08,
+    "se": 1.4610767040679207e-09,
+    "ci_lower": 9.541927470380074e-09,
+    "ci_upper": 3.1751019591297336e-09
+  },
+  "execution": {
+    "result": {
+      "estimate": -0.7145323483651014,
+      "se": 0.1807917455191005,
+      "ci_lower": -1.1084437230000503,
+      "ci_upper": -0.32062097373015247,
+      "p_value": 0.0019200150851339482,
+      "tau2": 0.3132433259808952,
+      "I2": 92.22138607496557,
+      "k": 13,
+      "prediction_lower": -1.9960169670222918,
+      "prediction_upper": 0.5669522702920891,
+      "metafor_version": "5.0.1",
+      "method": "REML with Knapp-Hartung inference",
+      "analysis_code": "library(metafor)\nlibrary(jsonlite)\na<-commandArgs(trailingOnly=TRUE)\nd<-read.csv(a[1])\nm<-rma(yi=yi,vi=vi,data=d,method=\"REML\",test=\"knha\")\np<-predict(m)\nwrite_json(list(estimate=as.numeric(m$b),se=m$se,ci_lower=m$ci.lb,ci_upper=m$ci.ub,p_value=m$pval,tau2=m$tau2,I2=m$I2,k=m$k,prediction_lower=p$pi.lb,prediction_upper=p$pi.ub,metafor_version=as.character(packageVersion(\"metafor\")),method=\"REML with Knapp-Hartung inference\"),a[2],auto_unbox=TRUE,pretty=TRUE,digits=16)\n",
+      "interpretation": "Pooling requires scientifically compatible outcomes and effect scales. Heterogeneity statistics do not resolve incompatibility."
+    },
+    "provenance": {
+      "engine": "meta_analysis",
+      "parameters": {
+        "effect": "yi",
+        "variance": "vi",
+        "independent_effects_confirmed": true
+      },
+      "started_at": "2026-10-14T10:45:03Z",
+      "python": "3.12.14",
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+      "origin": "local-computation",
+      "verification": "execution recorded; scientific interpretation requires review",
+      "input_sha256": "9b4e7ab8724cfc5f4ac0d8a0809330a38fbb5c66ad45c67688de5e52c2256016",
+      "input_bytes": 544,
+      "elapsed_seconds": 1.043,
+      "package_versions": {
+        "numpy": "2.3.5",
+        "pypdf": "6.10.0",
+        "asreview": "3.0.8",
+        "indra": "1.24.0"
+      }
+    }
+  },
+  "reference_source": "https://wviechtb.github.io/metafor/",
+  "input_sha256": "3a17f96210003e5365fef00b7da1da0b5f8bcab7f68d19b6cd99c5ede6066c55",
+  "status": "passed"
+}

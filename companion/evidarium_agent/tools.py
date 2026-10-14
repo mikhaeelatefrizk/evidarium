@@ -40,6 +40,7 @@ def extract(path,args):
         status=str(r.status)
         if 'success' not in status.lower():raise RuntimeError('Docling did not successfully extract the document: '+status)
         text=r.document.export_to_markdown();parts=[{'location':'document','text':text}];warnings=[str(x) for x in r.errors]
+        if 'partial' in status.lower():warnings.append('Docling reported partial success. Some document content was not extracted.')
     elif ext=='.pdf':
         from pypdf import PdfReader
         reader=PdfReader(path)

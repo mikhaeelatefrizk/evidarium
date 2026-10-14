@@ -58,3 +58,12 @@ Conversation reads are paginated at 100 messages. Other large project reads stil
 ## Article import, retrieval, and citation access
 
 `lib/papers.mjs` handles bounded Europe PMC/JATS ingestion. `lib/retrieval.mjs` and migration `0005` implement transactional index backfill, triggers, and project-scoped FTS5 search. `lib/citations.mjs` checks response references against project records and the evidence delivered during that run. See [release 0.2](release-0.2.md) for the exact scope, limits, and live-provider result.
+
+
+## Execution verification and isolation (0.3)
+
+Optional package environments are selected from a local, user-owned `engine-runtimes.json`; project uploads/imports never configure interpreters. ASReview, INDRA, PySR and Docling can be installed separately. Missing configured interpreters fail before task state changes to running. Docling selection applies only to extraction tasks explicitly requesting that engine.
+
+The shared `lib/live-check.mjs` runner is used by both the local UI and CLI. It checks that the runtime is local and the requested model appears in the real account catalog before creating a verification project. It approves only two fixed fixture computations, waits for completed results, performs two cited chat turns, and verifies export/audit persistence. It records failures and never fabricates a passing result. The hosted edition refuses this check. The developer verification used a controlled test model; real account completion remains outstanding.
+
+Runtime launchers probe SQLite FTS5 before opening user data. CI checks actual Windows/macOS/Linux installation and HTTP operation, separately from browser or OAuth validation. See the versioned release record for checks and their limits.

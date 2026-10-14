@@ -1,0 +1,102 @@
+{
+  "engine": "indra",
+  "scope": "Synthetic representation and rejection tests, not a biological validation.",
+  "execution": {
+    "result": {
+      "nodes": [
+        {
+          "id": "106ca1fff18cf707ebf898b3",
+          "name": "same-name",
+          "db_refs": {
+            "HGNC": "1097"
+          },
+          "state": {
+            "name": "same-name",
+            "db_refs": {
+              "HGNC": "1097"
+            }
+          }
+        },
+        {
+          "id": "5afa94f4b30afdcbdbe47d6c",
+          "name": "same-name",
+          "db_refs": {
+            "HGNC": "6840"
+          },
+          "state": {
+            "name": "same-name",
+            "db_refs": {
+              "HGNC": "6840"
+            }
+          }
+        }
+      ],
+      "claims": [
+        {
+          "statement_id": "8b3e7ea5-9e82-42b8-9921-04192b6d7a1c",
+          "type": "Activation",
+          "agents": [
+            "same-name",
+            "same-name"
+          ],
+          "agent_ids": [
+            "106ca1fff18cf707ebf898b3",
+            "5afa94f4b30afdcbdbe47d6c"
+          ],
+          "evidence": [
+            {
+              "source_api": "synthetic-fixture",
+              "text": "Synthetic verification only.",
+              "source_hash": -5031919357891541911
+            }
+          ]
+        }
+      ],
+      "input_statements": 1,
+      "parsed_statements": 1,
+      "note": "Assembly of supplied mechanistic claims, not independent experimental validation or automatic PDF extraction."
+    },
+    "provenance": {
+      "engine": "mechanism_graph",
+      "parameters": {
+        "statements": [
+          {
+            "type": "Activation",
+            "obj_activity": "activity",
+            "subj": {
+              "name": "same-name",
+              "db_refs": {
+                "HGNC": "1097"
+              }
+            },
+            "obj": {
+              "name": "same-name",
+              "db_refs": {
+                "HGNC": "6840"
+              }
+            },
+            "evidence": [
+              {
+                "source_api": "synthetic-fixture",
+                "text": "Synthetic verification only."
+              }
+            ]
+          }
+        ]
+      },
+      "started_at": "2026-10-14T10:46:37Z",
+      "python": "3.12.14",
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+      "origin": "local-computation",
+      "verification": "execution recorded; scientific interpretation requires review",
+      "elapsed_seconds": 0.076,
+      "package_versions": {
+        "numpy": "2.3.5",
+        "pypdf": "6.10.0",
+        "asreview": "3.0.8",
+        "indra": "1.24.0"
+      }
+    }
+  },
+  "status": "passed"
+}

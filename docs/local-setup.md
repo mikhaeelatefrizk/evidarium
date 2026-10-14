@@ -30,7 +30,7 @@ Tokens are kept in `keyring`, never a plaintext fallback. A working Windows Cred
 |---|---|---|
 | `EVIDARIUM_DATA_DIR` | `~/.evidarium` | Local project database, original files, identity mapping, and job snapshots. |
 | `EVIDARIUM_PORT` | `4317` | Loopback port, 1024–65535. Host binding remains `127.0.0.1`. |
-| `EVIDARIUM_PYTHON` | Project `.venv` Python | Interpreter for trusted scientific and authorization workers. |
+| `EVIDARIUM_PYTHON` | Project `.venv` Python | Base interpreter for authorization and built-in workers; registered optional engines use their own interpreters. |
 | `EVIDARIUM_NO_OPEN` | unset | Set to `1` to avoid automatically opening the workspace browser. |
 | `EVIDARIUM_OLLAMA_MODEL` | unset | Explicit locally installed specialist model for PaperQA2. |
 | `EVIDARIUM_OPENSCHOLAR_DIR` | unset | Installed upstream OpenScholar repository. |
@@ -56,6 +56,18 @@ Import limits: 1,000 sources; 100 notes; 500 messages; 100 tasks; 500 receipts; 
 - **Interrupted response:** partial text is retained; send a narrower follow-up. Automatic retries are avoided because they can duplicate work or consumption.
 - **App stopped during a run:** the next startup marks its record interrupted. Prepare and approve a new run after inspecting the original.
 - **Incomplete upload:** delete the incomplete file entry and upload again. There is no automatic resume yet.
-- **Optional package missing:** install the documented engine in the configured worker environment. An installation alone is not scientific validation.
+- **Optional package missing:** install the documented engine in its isolated environment. An installation alone is not scientific validation.
 
 Stopping an app process does not guarantee every external runtime stops immediately. Cancellation kills the local worker process tree and asks Docker to remove its named container. If the operating system or Docker is unresponsive, inspect running processes/containers yourself.
+
+## Optional engine environments
+
+Close the app and run `python3 scripts/install-engine.py asreview`, `indra`, `pysr`, or `docling` (Windows: `python` instead of `python3`). Each installs in its own directory beneath the selected `EVIDARIUM_DATA_DIR`. This prevents incompatible SymPy/filelock dependencies from breaking other engines or OAuth. PySR and Docling can require several GiB of packages and model/runtime downloads. No installed dependency is treated as a passing scientific test.
+
+The installer builds a fresh environment and writes `engine-runtimes.json` only after success; failed attempts do not overwrite the existing registration. Previous successful environments are retained for manual cleanup/rollback. It maps `screen_rank`, `mechanism_graph`, `symbolic_regression`, and `docling` to local Python executables. Research imports cannot change this file. A missing configured interpreter is an error, not a fallback. Native extraction continues using the base environment; only `engine: "docling"` selects the Docling environment.
+
+## Live account acceptance
+
+After signing in locally, select a model and expand **Verify this connected workflow**. Its consent covers only the two known fixture computations and two chat turns (up to twelve inference requests). It creates a separate verification project and retains failures honestly. This checks account-specific execution and reference resolution; a pass is not a scientific-quality certification.
+
+The equivalent command is `node scripts/verify-live.mjs --model <selected-catalog-slug> --use-chatgpt-plan --approve-fixture-analysis`. Run it while the local app is open. The report contains model/usage/check results and project IDs, not OAuth credentials. Do not upload a personal report publicly without reviewing its contents.

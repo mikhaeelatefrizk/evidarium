@@ -46,6 +46,6 @@ test('real ASReview fits labels and ranks every unreviewed candidate without cha
 });
 async function fetchPatch(f,id,decision){return f.patch(`sources/${id}`,{decision,stage:'title_abstract',reason:decision==='exclude'?'Synthetic fixture exclusion':''})}
 test('real INDRA preserves distinct grounded agents and evidence',{timeout:150000},async t=>{
- const f=await fixture(t),out=await f.execute('mechanism_graph',{statements:[{type:'Activation',subj:{name:'same-name',db_refs:{HGNC:'1097'}},obj:{name:'same-name',db_refs:{HGNC:'6840'}},evidence:[{source_api:'synthetic-fixture',text:'Synthetic verification only, not an experimentally validated claim.'}]}]});
+ const f=await fixture(t),out=await f.execute('mechanism_graph',{statements:[{type:'Activation',obj_activity:'activity',subj:{name:'same-name',db_refs:{HGNC:'1097'}},obj:{name:'same-name',db_refs:{HGNC:'6840'}},evidence:[{source_api:'synthetic-fixture',text:'Synthetic verification only, not an experimentally validated claim.'}]}]});
  assert.equal(out.result.nodes.length,2);assert.notEqual(...out.result.claims[0].agent_ids);assert.equal(out.result.claims[0].evidence[0].source_api,'synthetic-fixture');
 });

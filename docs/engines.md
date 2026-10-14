@@ -8,7 +8,7 @@ Prepare an analysis in the UI, select its input, inspect the JSON parameters in 
 
 **`extract`** — select a supported original. Parameters `{}` or `{"max_pages":300}`. PDF extraction is text-based; scanned/empty pages are flagged, not invented. DOCX paragraphs/tables are supported, but layout, images and revisions are not fully interpreted. XLSX/XLSM extraction reads cached cell values without running macros or recalculating formulas. UTF-8 text/code/bibliography formats are text only. Default extracted text cap is two million characters. Inspect all warnings under Files → Read text.
 
-Docling: install `docling` separately in the worker environment and use `{"engine":"docling","max_pages":300}`. Consult its [document-converter API](https://docling-project.github.io/docling/reference/document_converter/). First use can fetch model resources. This branch was not executed in the release checks.
+Docling: run `python3 scripts/install-engine.py docling` to create a separate environment and use `{"engine":"docling","max_pages":300}`. Consult its [document-converter API](https://docling-project.github.io/docling/reference/document_converter/). First use can fetch model resources. A generated DOCX prose/table fixture passed in 0.3. Scanned PDF/OCR and complex-layout accuracy remain unverified.
 
 ## Meta-analysis with metafor
 
@@ -22,11 +22,11 @@ Set the confirmation only after checking study/report dependence. The adapter ru
 
 ## Screening with ASReview
 
-Install a compatible ASReview release exposing `ActiveLearningCycle`, `Tfidf`, `SVM`, `Balanced`, and `Max`. The adapter targets the documented 3.x API. Parameters `{"stage":"title_abstract"}`. At least one included and one excluded record at the same stage are required. All candidate features are fit consistently; the classifier uses labeled seeds and ranks only unreviewed records. Labels are never changed. Rankings do not guarantee sensitivity/recall or replace a complete search strategy. [Upstream](https://github.com/asreview/asreview).
+Use `python3 scripts/install-engine.py asreview` (tested ASReview 3.0.8), exposing `ActiveLearningCycle`, `Tfidf`, `SVM`, `Balanced`, and `Max`. The adapter targets the documented 3.x API. Parameters `{"stage":"title_abstract"}`. At least one included and one excluded record at the same stage are required. All candidate features are fit consistently; the classifier uses labeled seeds and ranks only unreviewed records. Labels are never changed. Rankings do not guarantee sensitivity/recall or replace a complete search strategy. [Upstream](https://github.com/asreview/asreview).
 
 ## Symbolic regression with PySR
 
-Install `pysr` and complete its Julia setup. First execution may download Julia and packages and use significant CPU/storage. Input: finite numeric CSV, 20–20,000 rows, at most 15 features. Example:
+Run `python3 scripts/install-engine.py pysr` and complete Julia setup in that environment. First execution may download Julia and packages and use significant CPU/storage. Input: finite numeric CSV, 20–20,000 rows, at most 15 features. Example:
 
 ```json
 {"features":["temperature","pressure"],"target":"response","iterations":30}
@@ -36,7 +36,7 @@ The adapter uses a fixed 80/20 random split, seed 42, serial deterministic mode,
 
 ## Mechanistic claims with INDRA
 
-Install `indra`. Input: **INDRA statement JSON**, or parameters with a `statements` array. No PDF-to-mechanism reader is bundled. The adapter parses statements and returns agents, relationship types, and their attached evidence. These are represented claims, not new biological verification. Compare input and parsed statement counts for dropped/unsupported statements. [Upstream](https://github.com/gyorilab/indra).
+Run `python3 scripts/install-engine.py indra`. Input: **INDRA statement JSON**, or parameters with a `statements` array. No PDF-to-mechanism reader is bundled. The adapter parses statements and returns agents, relationship types, and their attached evidence. These are represented claims, not new biological verification. Malformed/dropped statements fail the task instead of returning a partial graph. Agent identities include their full supplied state and grounding, so different grounded agents with identical names are retained separately. [Upstream](https://github.com/gyorilab/indra).
 
 ## PaperQA2 with an explicit local model
 
@@ -82,3 +82,7 @@ The image starts a local OpenAI-compatible model server on container loopback an
 ## External computation
 
 You can export project metadata, run an analysis elsewhere, and upload its input/output/code/logs as original files. An imported Evidarium task record is labeled externally supplied and keeps its claimed provenance. The app does not assert it performed or independently reproduced that work. Cloud hardware rental, billing, credential delegation, and remote scheduling are not implemented.
+
+## Verification scope in 0.3
+
+See [the release record](release-0.3.md) for exact datasets, versions, outputs and remaining gaps. R/metafor reproduced the published BCG example and matched a separately implemented SciPy REML calculation. ASReview processed 3,453 real records. Three approved engine workflows passed through the actual local API and Python worker. PySR fit a known synthetic equation and a measured dataset; an optional Julia PythonCall extension emitted an initialization error even though the core fits completed. Docling passed one generated DOCX fixture. Docker passed execution and declared-boundary checks in CI. PaperQA2, OpenScholar and Biomni remain unverified end to end, and no engine has independent domain-wide scientific certification.

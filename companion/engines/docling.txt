@@ -1,0 +1,2 @@
+# Large optional environment; may install several GiB of ML dependencies.
+docling==2.138.0
