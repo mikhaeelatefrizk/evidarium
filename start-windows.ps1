@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Install Node.js 22.13+ from nodejs.org, then try again.' }
-& node -e 'const [a,b]=process.versions.node.split(".").map(Number); if(a<22||(a===22&&b<13))process.exit(1)'
-if ($LASTEXITCODE -ne 0) { throw 'Node.js 22.13+ is required.' }
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Install Node.js 24.19+ from nodejs.org, then try again.' }
+& node scripts/check-runtime.mjs
+if ($LASTEXITCODE -ne 0) { throw 'Runtime checks failed. Install an official Node.js 24.19+ build with SQLite FTS5.' }
 if (-not (Test-Path '.venv/Scripts/python.exe')) {
   if (Get-Command py -ErrorAction SilentlyContinue) { & py -3 -m venv .venv } else { & python -m venv .venv }
   if ($LASTEXITCODE -ne 0) { throw 'Install Python 3.11+ with venv support.' }

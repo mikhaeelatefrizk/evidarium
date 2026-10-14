@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd -- "$(dirname -- "$0")"
-command -v node >/dev/null || { echo 'Install Node.js 22.13 or newer from nodejs.org, then run again.'; exit 1; }
-node -e 'const [a,b]=process.versions.node.split(".").map(Number);if(a<22||(a===22&&b<13)){console.error("Node.js 22.13+ is required");process.exit(1)}'
+command -v node >/dev/null || { echo 'Install Node.js 24.19 or newer from nodejs.org, then run again.'; exit 1; }
+node scripts/check-runtime.mjs
 command -v python3 >/dev/null || { echo 'Install Python 3.11+ from python.org, then run again.'; exit 1; }
 python3 -c 'import sys; assert sys.version_info >= (3,11), "Python 3.11+ is required"'
 if [ ! -f .venv/bin/python ]; then python3 -m venv .venv; fi

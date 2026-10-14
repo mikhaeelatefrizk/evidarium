@@ -6,6 +6,8 @@ import {Readable} from 'node:stream';
 import {createHash,randomUUID} from 'node:crypto';
 
 export function createDB(filename,migrations){
+ const probe=new DatabaseSync(':memory:');
+ try{probe.exec('CREATE VIRTUAL TABLE runtime_check USING fts5(text)')}catch{throw Error('This Node.js build lacks SQLite FTS5. Install an official Node.js 24.19+ build before opening Evidarium.')}finally{probe.close()}
  const sql=new DatabaseSync(filename);sql.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
  sql.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY)');
  for(const name of readdirSync(migrations).filter(n=>n.endsWith('.sql')).sort())if(!sql.prepare('SELECT name FROM _migrations WHERE name=?').get(name)){
