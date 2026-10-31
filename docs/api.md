@@ -81,3 +81,48 @@ All project paths below require the authenticated owner. Unsafe methods retain o
 | GET | `/api/files/:id/upload-status` | Name, size, state, part size and checked/reserved part hashes; no storage key or upload credential |
 
 A 409 on manuscript save means the supplied revision lost a race; preserve the user's draft before reloading. Imported project manuscripts receive new IDs and revision 1; references are remapped, history is not reconstructed. Multipart completion is idempotent for stored files; an interrupted `completing` state can be retried. In-flight part reservations expire after two minutes, reference import locks after five minutes. No automatic background worker or hosted job queue is implied.
+
+## Independent screening (v0.7)
+
+These routes require hosted, separately authenticated accounts. The local edition returns 409 because it has only one identity. Reviewer membership grants only the assigned screening snapshots, decisions and originals below; ordinary project, source, file, review, task and export APIs remain owner-only. Writes reject cross-origin requests. Errors use the usual `{error}` shape; 409 requires reloading current state rather than overwriting it.
+
+`P` below means `/api/screening/projects/:project`. Member identities and invitation email addresses are visible only to the owner through team management.
+
+| Method and route | Contract |
+|---|---|
+| `GET /api/screening/shared` | `{projects:[{id,title,role:"owner"|"reviewer"}],local:false}` |
+| `POST /api/screening/invitations/accept` | `{token}` → `{project:{id,title},role:"reviewer"}`. Must match the signed-in email. |
+| `GET P/team` | Owner: `{project,owner:{userId,displayName,email},members:[{userId,email,displayName,status,revision}],invitations:[{id,email,status,revision,expires,created}]}`. |
+| `POST P/invitations` | Owner: `{email}` → `{id,email,expires,revision,token,notice}`. Token shown only here; copy the link manually. No email is sent. |
+| `POST P/invitations/:id/cancel` | Owner: `{revision}`. |
+| `POST P/members/:userId/revoke` | Owner: `{revision}`. Revocation preserves records and invalidates existing assignment generations. Rejoining does not restore old assignments. |
+| `GET P/rounds?offset=0` | `{project,isOwner,userId,rounds,hasMore,nextOffset}`; 25 summaries per page. Summary `snapshot` contains only `source.title` and `summary:true`; fetch detail before making a judgment. Reload after changes because this browsing list is ordered newest first. |
+| `POST P/rounds` | Owner: `{sourceId,stage:"title_abstract"|"full_text",reviewerIds:[id,id],reason}` → complete round, status 201. Two distinct active identities; owner may be one reviewer. Saved eligibility criteria are required. |
+| `GET P/rounds/:id` | Owner or assigned active reviewer: complete round below. |
+| `PUT P/rounds/:id/decision` | Assigned reviewer: `{decision:"include"|"exclude",reason,revision:0}`. Exclusion needs a reason. Submission is immutable. |
+| `POST P/rounds/:id/resolve` | Owner: `{decision,reason,revision}` for a conflict. |
+| `POST P/rounds/:id/cancel` | Owner: `{reason,revision}` for an open/conflict round. Final rounds remain final; corrections use a new numbered round. |
+| `GET P/rounds/:id/evidence/:fileId` | Original bytes scoped to the exact snapshot/project/report and recorded checksum/size. No access to other project files. |
+| `GET P/export?offset=0` | Owner: one archival JSON page, described below. |
+
+A complete round includes `id,sourceId,stage,round,status,revision,created,updated,snapshotHash,snapshot,reviewerIds,ownDecision,decisions,finalDecision,finalReason,resolvedBy,canSubmit,canResolve,canCancel,notice`. Status is `open`, `conflict`, `consensus`, `resolved` or `cancelled`. A decision is `{reviewer,decision,reason,revision,submitted}`; unsubmitted choices/times are null. `decisions` is null until both reviewers submit, even for the owner. The owner can coordinate two other reviewers but cannot submit as either. Revoking either member freezes further submissions for that pair; cancel and create a new assignment.
+
+The immutable `snapshot` contains the saved question, criteria, structured protocol, bibliographic source fields (without legacy screening labels), and linked files with their metadata, SHA-256 and available extracted text. Full-text rounds require a linked completed original with a full-file checksum. The workflow for manually uploaded evidence is **upload → extract text/PDF → link original to report → assign full-text round**. Website extraction limits still apply; a partial extraction is labelled and the original remains available. Snapshots are capped at 1 MiB UTF-8 each and 8 MiB total per project; 5,000 retained rounds are allowed. Detail/actions/export recompute the saved snapshot checksum before proceeding. A matching checksum checks consistency, not scientific correctness or authenticity against a privileged database writer.
+
+Peer decisions remain concealed until both submit. A cancelled round with only one submission retains concealed records internally; an owner export does not reveal another person's pending decision. Current-round choices are concealed, but earlier revealed rounds or prior familiarity may compromise methodological independence. Independent screening is a separate ledger: it does not overwrite legacy owner source decisions, the owner review workspace, or legacy counts.
+
+Invitations expire after 72 hours, contain 256-bit random tokens stored only as hashes, and can be accepted once by the bound email. Limits are 20 retained member identities, 25 pending invitations and 500 retained invitations per project. Revocation cannot retract information already downloaded.
+
+### Archival pages and preservation
+
+The first export returns `{schema,project,exportedAt,archiveVersion,rounds,events,complete,concealedDecisionEvents,pagination:{offset,pageSize:10,totalRounds,hasMore,nextOffset},notice}`. Download every page while `hasMore` is true, passing both `offset=nextOffset` and `version=archiveVersion` for subsequent requests. Rounds use stable ascending insertion order. Team/invitation events are included only on page one; round events accompany their round. Any screening event change during or between pages returns 409: restart at page one. These are version-checked pages, not an atomic full-database backup.
+
+`concealedDecisionEvents` counts redacted peer submission events on that page. `complete:true` is possible only for an unredacted single-page archive. A multi-page archive therefore has `complete:false` on every page, even after all pages are saved; consult pagination and omission counts. No original bytes, invitation tokens or transferable access grants are included, and no archive import endpoint exists. Keep original files separately. The general project interchange export also excludes this independent ledger; it is not a full backup.
+
+## Original/report association and task integrity (v0.7)
+
+Owner-only `GET /api/files/:id/association` returns `{fileId,sourceId:null|string,revision,sha256,status,locked,notice}`. Owner-only `PUT` accepts `{sourceId:null|string,revision,sha256,reason}` and returns the new view. `sourceId:null` explicitly unlinks. Report and file must belong to the same project, the current revision/checksum must match, and the reason must be nonempty and at most 2,000 characters. One original per report is supported. Uploading, completing and deleting files cannot be linked. A full SHA-256 is required; ordinary multipart uploads initially retain per-part hashes, so extract the original first to compute and save its full checksum.
+
+Any retained independent-screening snapshot or review-workspace/revision extraction reference locks the existing association, including a formerly unlinked file. Linking, unlinking or replacing that association must not rewrite historical evidence. The SQL update checks references and current revision atomically with its audit event; concurrent changes return 409. Review saves also recheck the file/project/report association, checksum, revision and state at commit, so a concurrent relink/deletion cannot silently attach stale evidence.
+
+Both hosted and local task preparation/approval refuse unfinished or deleting originals. Extraction completion atomically saves the text, input fingerprint, task result and completion receipts only while the input record is still eligible and unchanged and the task is running. Cancellation or deletion cannot be undone by a late worker; a changed/missing input produces a failed task without a completed result. Deletion tombstones remain retryable after uncertain storage failure.

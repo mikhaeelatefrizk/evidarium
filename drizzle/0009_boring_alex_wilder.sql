@@ -1,0 +1,1 @@
+ALTER TABLE `files` ADD `link_revision` integer DEFAULT 0 NOT NULL;

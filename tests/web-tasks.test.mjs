@@ -10,6 +10,35 @@ async function fixture(t){
  }
  return {root,db,bucket,call,project,upload};
 }
+
+test('hosted tasks reject every unfinished or deleting input at preparation and approval',async t=>{
+ const f=await fixture(t),file=await f.upload('state.txt','Original evidence for extraction.'),proposal=await(await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).json();
+ for(const status of ['uploading','completing','deleting']){f.db.raw.prepare('UPDATE files SET status=? WHERE id=?').run(status,file.id);assert.equal((await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).status,404);assert.equal((await f.call('tasks/'+proposal.id+'/approve','POST',{})).status,404);}
+ assert.equal(f.db.raw.prepare('SELECT state FROM tasks WHERE id=?').get(proposal.id).state,'awaiting_approval');
+});
+test('an extraction finishing after deletion or replacement records failure without resurrecting the file',async t=>{
+ const f=await fixture(t),originalBatch=f.db.batch.bind(f.db);
+ for(const change of ['deleting','completing','uploading','removed','checksum']){
+  const file=await f.upload(change+'.txt','Original evidence for extraction.'),task=await(await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).json();
+  let injected=false;f.db.batch=async statements=>{if(!injected){injected=true;if(change==='removed')f.db.raw.prepare('DELETE FROM files WHERE id=?').run(file.id);else if(change==='checksum')f.db.raw.prepare('UPDATE files SET sha256=? WHERE id=?').run('0'.repeat(64),file.id);else f.db.raw.prepare('UPDATE files SET status=? WHERE id=?').run(change,file.id);}return originalBatch(statements)};
+  const r=await f.call('tasks/'+task.id+'/approve','POST',{});f.db.batch=originalBatch;assert.equal((await r.json()).state,'failed',change);
+  const stored=f.db.raw.prepare('SELECT * FROM files WHERE id=?').get(file.id);if(change==='removed')assert.equal(stored,undefined);else{assert.equal(stored.extracted,null);assert.equal(stored.status,change==='checksum'?'stored':change);}
+  assert.equal(f.db.raw.prepare('SELECT result FROM tasks WHERE id=?').get(task.id).result,null);assert.equal(f.db.raw.prepare("SELECT count(*) n FROM audit WHERE action='task.completed' AND json_extract(detail,'$.taskId')=?").get(task.id).n,0);
+ }
+});
+test('cancelled extraction cannot persist text, result or completion receipts',async t=>{
+ const f=await fixture(t),file=await f.upload('cancel.txt','Original evidence for extraction.'),task=await(await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).json(),batch=f.db.batch.bind(f.db);let injected=false;
+ f.db.batch=async statements=>{if(!injected){injected=true;f.db.raw.prepare("UPDATE tasks SET state='cancelled' WHERE id=?").run(task.id);}return batch(statements)};
+ assert.equal((await(await f.call('tasks/'+task.id+'/approve','POST',{})).json()).state,'cancelled');assert.equal(f.db.raw.prepare('SELECT extracted FROM files WHERE id=?').get(file.id).extracted,null);assert.equal(f.db.raw.prepare("SELECT count(*) n FROM audit WHERE action IN ('task.completed','task.failed') AND json_extract(detail,'$.taskId')=?").get(task.id).n,0);
+});
+test('extraction result, file text and completion receipts roll back together',async t=>{
+ const f=await fixture(t),file=await f.upload('rollback.txt','Original evidence for extraction.'),task=await(await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).json();
+ f.db.raw.exec("CREATE TRIGGER reject_completion BEFORE INSERT ON audit WHEN NEW.action='task.completed' BEGIN SELECT RAISE(ABORT,'injected failure'); END");assert.equal((await(await f.call('tasks/'+task.id+'/approve','POST',{})).json()).state,'failed');const row=f.db.raw.prepare('SELECT status,extracted,sha256 FROM files WHERE id=?').get(file.id);assert.equal(row.status,'stored');assert.equal(row.extracted,null);assert.equal(row.sha256,null);
+});
+test('changed bytes cannot be accepted as a new version of an already fingerprinted original',async t=>{
+ const f=await fixture(t),file=await f.upload('checksum.txt','Original evidence for extraction.'),task=await(await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).json();await f.call('tasks/'+task.id+'/approve','POST',{});
+ const old=f.db.raw.prepare('SELECT key,sha256,extracted FROM files WHERE id=?').get(file.id);await f.bucket.put(old.key,Buffer.from('Tampered evidence for extraction.'));assert.equal((await f.call('tasks','POST',{project:f.project.id,kind:'web_extract_text',args:{file_id:file.id}})).status,409);assert.deepEqual(f.db.raw.prepare('SELECT key,sha256,extracted FROM files WHERE id=?').get(file.id),old);
+});
 test('public reference check computes actual fixed results without accessing private records',async t=>{
  const {call}=await fixture(t),r=await call('science-check','GET',undefined,null);assert.equal(r.status,200);const report=await r.json();assert.equal(report.status,'passed');assert.equal(report.execution,'hosted_native');assert.equal(report.checks.length,3);assert.equal(report.checks[0].actual.mean,4);assert(report.checks[1].absolute_errors.tau2<1e-6);assert.equal(report.checks[2].passed,true);
 });

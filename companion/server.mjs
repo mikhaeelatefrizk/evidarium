@@ -15,6 +15,7 @@ import {checkCitations} from '../lib/citations.mjs';
 import {importOpenArticle} from '../lib/papers.mjs';
 import {enginePython} from './engine-runtime.mjs';
 import {handleWebTasks,WEB_KINDS} from '../lib/web-tasks.mjs';
+import {commitTaskCompletion,failRunningTask} from '../lib/task-completion.mjs';
 const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const KINDS=['extract','describe_csv','meta_analysis','screen_rank','symbolic_regression','mechanism_graph','python','paperqa','openscholar','biomni'];
 export function createApplication({dataRoot,python,worker=pythonWorker}={}){
@@ -30,7 +31,7 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
   if(!KINDS.includes(kind))throw new AppError('Unknown analysis engine.');if(!args||typeof args!=='object'||Array.isArray(args))throw new AppError('Task parameters must be a JSON object.');
   if(JSON.stringify(args).length>100000)throw new AppError('Task parameters exceed 100,000 characters.');
   const safe=Object.fromEntries(Object.entries(args).filter(([k])=>!k.startsWith('_')));
-  if(safe.file_id){const f=await first(db,'SELECT * FROM files WHERE id=? AND project=?',safe.file_id,p.id);if(!f||f.status==='uploading')throw new AppError('Select a completed file in this project.');safe.file_name=f.name;safe.input_sha256=await sha256File(bucket.filepath(f.key))}
+  if(safe.file_id){const f=await first(db,'SELECT * FROM files WHERE id=? AND project=?',safe.file_id,p.id);if(!f||['uploading','completing','deleting'].includes(f.status))throw new AppError('Select a completed file in this project.');safe.file_name=f.name;safe.input_sha256=await sha256File(bucket.filepath(f.key));if(f.sha256&&f.sha256!==safe.input_sha256)throw new AppError('The original bytes no longer match their recorded checksum.',409)}
   else if(['extract','describe_csv','meta_analysis','symbolic_regression','paperqa','openscholar'].includes(kind))throw new AppError('This engine requires an uploaded input file.');
   if(kind==='python'&&!clean(safe.code,100000))throw new AppError('Provide the exact Python code to review.');
   const id=uid();await run(db,'INSERT INTO tasks (id,project,kind,args,state,created,updated) VALUES (?,?,?,?,?,?,?)',id,p.id,kind,JSON.stringify(safe),'awaiting_approval',now(),now());await audit(db,p.id,'task.proposed',{taskId:id,kind,parameters:safe,origin});return {id,state:'awaiting_approval',kind,parameters:safe};
@@ -38,12 +39,13 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
  async function finishTask(t,payload,job){
   try{const output=await job.promise;const current=await first(db,'SELECT state FROM tasks WHERE id=?',t.id);if(current?.state!=='running')return;
    if(t.kind==='extract'){
-    const result=output.result;await run(db,'UPDATE files SET extracted=?,status=?,sha256=? WHERE id=?',JSON.stringify(result),result.complete?'extracted':'partial',output.provenance.input_sha256,payload.args.file_id);
+    const result=output.result;if(output.provenance?.input_sha256!==payload.args.input_sha256)throw new Error('Worker input fingerprint does not match the approved original.');
     output.result={characters:result.characters,segments:result.segments.length,warnings:result.warnings,complete:result.complete,method:result.method};
+    await commitTaskCompletion(db,t,output,{fileId:payload.args.file_id,sha256:payload.args.input_sha256,originalSha256:payload.args._stored_sha256,result});return;
    }
    if(output.result?.artifact_files){const saved=[];for(const artifact of output.result.artifact_files){const bytes=Buffer.from(artifact.base64,'base64');if(bytes.length>4*1024**2)continue;const id=uid(),name=clean(artifact.name,200).replace(/[\/\\]/g,'_'),key='local/'+t.project+'/'+id;await bucket.put(key,bytes);const sha=await sha256File(bucket.filepath(key));await run(db,'INSERT INTO files (id,project,name,mime,size,key,status,parts,sha256,created) VALUES (?,?,?,?,?,?,?,?,?,?)',id,t.project,name,'application/octet-stream',bytes.length,key,'generated','[]',sha,now());saved.push({id,name,sha256:sha})}delete output.result.artifact_files;output.result.saved_artifacts=saved}
-   await run(db,'UPDATE tasks SET state=?,result=?,updated=? WHERE id=?','completed',JSON.stringify(output),now(),t.id);await audit(db,t.project,'task.completed',{taskId:t.id,kind:t.kind,provenance:output.provenance});await message(db,t.project,'tool',`${t.kind} completed. Inspect task ${t.id} in Activity for the result, parameters, and provenance.`);
-  }catch(e){if((await first(db,'SELECT state FROM tasks WHERE id=?',t.id))?.state==='running'){await run(db,'UPDATE tasks SET state=?,error=?,updated=? WHERE id=?','failed',clean(e.message,4000),now(),t.id);await audit(db,t.project,'task.failed',{taskId:t.id,error:clean(e.message,4000)});await message(db,t.project,'tool',`${t.kind} failed: ${clean(e.message,4000)}. No completed result was recorded.`)}}
+   await commitTaskCompletion(db,t,output);
+  }catch(e){await failRunningTask(db,t,e)}
   finally{running.delete(t.id);await rm(path.join(dataRoot,'jobs',t.id),{recursive:true,force:true})}
  }
  async function approve(t){
@@ -54,9 +56,9 @@ export function createApplication({dataRoot,python,worker=pythonWorker}={}){
   // Validate installation before moving a proposal to running.
   taskPython(t.kind,JSON.parse(t.args));
   const args=JSON.parse(t.args);let snapshot=null;
-  if(args.file_id){const f=await first(db,'SELECT * FROM files WHERE id=? AND project=?',args.file_id,t.project);if(!f)throw new AppError('Input file was removed.');const source=bucket.filepath(f.key);if(await sha256File(source)!==args.input_sha256)throw new AppError('The input changed since the task was proposed. Prepare a new task.');const dir=path.join(dataRoot,'jobs',t.id);await mkdir(dir,{recursive:true,mode:0o700});snapshot=path.join(dir,'input'+path.extname(f.name));await copyFile(source,snapshot);args._file_name=f.name}
+  if(args.file_id){const f=await first(db,'SELECT * FROM files WHERE id=? AND project=?',args.file_id,t.project);if(!f||['uploading','completing','deleting'].includes(f.status))throw new AppError('Input file is missing or is not a completed original.',409);const source=bucket.filepath(f.key);if((f.sha256&&f.sha256!==args.input_sha256)||await sha256File(source)!==args.input_sha256)throw new AppError('The input changed since the task was proposed. Prepare a new task.');const dir=path.join(dataRoot,'jobs',t.id);await mkdir(dir,{recursive:true,mode:0o700});snapshot=path.join(dir,'input'+path.extname(f.name));await copyFile(source,snapshot);if(await sha256File(snapshot)!==args.input_sha256)throw new AppError('The copied input changed during preparation.',409);args._file_name=f.name;args._stored_sha256=f.sha256}
   args._task_id=t.id;const p=await projectFor(db,t.project,'local');const payload={command:'tool',kind:t.kind,args,path:snapshot,project:await projectData(db,p)};
-  const claimed=await run(db,"UPDATE tasks SET state='running',updated=? WHERE id=? AND state='awaiting_approval'",now(),t.id);if(!claimed.meta.changes)throw new AppError('This task changed while approval was being prepared.',409);await audit(db,t.project,'task.approved',{taskId:t.id,parameters:args,execution:'local',network:['paperqa','openscholar','symbolic_regression','extract'].includes(t.kind)?'Engine may fetch dependencies or contact configured local models; inspect guide':'custom code isolated with network disabled; trusted adapters run in local Python'});
+  const claimed=await run(db,"UPDATE tasks SET state='running',updated=? WHERE id=? AND state='awaiting_approval' AND (? IS NULL OR EXISTS(SELECT 1 FROM files WHERE id=? AND project=? AND sha256 IS ? AND status NOT IN ('uploading','completing','deleting')))",now(),t.id,args.file_id||null,args.file_id||null,t.project,args._stored_sha256??null);if(!claimed.meta.changes)throw new AppError('This task changed while approval was being prepared.',409);await audit(db,t.project,'task.approved',{taskId:t.id,parameters:args,execution:'local',network:['paperqa','openscholar','symbolic_regression','extract'].includes(t.kind)?'Engine may fetch dependencies or contact configured local models; inspect guide':'custom code isolated with network disabled; trusted adapters run in local Python'});
   const job=invoke(payload);running.set(t.id,{...job,kind:t.kind});finishTask(t,payload,job);return {id:t.id,state:'running'};
   }finally{preparingAnalysis=false}
  }

@@ -1,13 +1,19 @@
 # Evidarium
 
 
-**Current development release: 0.6.** Arabic/English systematic-review protocols, study/report linkage, evidence-checked extraction and revision history. [Release details](docs/release-0.6.md) · [Phase 1 scope and paid-launch gates](docs/phase-1-product.md). This is not yet the complete paid product.
+**Current development release: 0.7.** Independent reviewer invitations, concealed decisions, immutable evidence snapshots, recorded conflict resolution and stronger save/import recovery. [Release details](docs/release-0.7.md) · [Phase 1 scope and paid-launch gates](docs/phase-1-product.md). This is not yet the complete paid product.
 
 **Research you can trace.** A chat-centered research workspace connecting literature, original files, screening decisions, explicit evidence, and recorded computation.
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.6.0 — development release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.7.0 — development release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+
+## New in 0.7: independent screening
+
+Open **Independent review** in the hosted workspace. Invite a second reviewer by email, assign saved evidence and criteria to two distinct accounts, and submit locked decisions. Peer choices stay concealed until both submissions. Agreement records an outcome; disagreements require an owner resolution with a reason. Prior decisions remain in the record. English and Arabic forms, reviewer revocation and paginated archives are included. The single-user local edition does not claim independent identities.
+
+The independent ledger is separate from older source labels and PRISMA counts. Project JSON is interchange, not a full backup; retain original files and the independent archive separately. See [workflow audit](docs/workflow-audit-0.7.md). Live two-account hosted acceptance and a hosted recovery drill remain required before relying on this release for irreplaceable research. AI provider and pricing decisions are deferred.
 
 ## New in 0.5: references and writing on the website
 

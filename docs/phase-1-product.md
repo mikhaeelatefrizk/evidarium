@@ -8,16 +8,16 @@ The first paid audience is Arabic-speaking master's researchers conducting healt
 
 A researcher must be able to plan a review, document comprehensive searches, import and manage reports, collaborate with a second reviewer and supervisor, resolve screening disagreements, link reports to studies, extract and appraise evidence, conduct supported analyses reproducibly, write and export a correctly formatted thesis, and recover or export the project without losing its audit trail. Arabic and English must work throughout that journey. The owner remains responsible for methodological decisions; exact quotations and automated checks do not establish scientific validity.
 
-The app must explain outside dependencies at the point of use: institutional literature access, registry submissions, supervisor/ethics approval, actual experiments, paid compute and eligible ChatGPT accounts. It must not imply unrestricted access to all journals, unlimited model context, guaranteed graduation, or universal coverage of all disciplines.
+The app must explain outside dependencies at the point of use: institutional literature access, registry submissions, supervisor/ethics approval, actual experiments, paid compute and any eventual model-provider requirements. It must not imply unrestricted access to all journals, unlimited model context, guaranteed graduation, or universal coverage of all disciplines.
 
 ## Required acceptance gates
 
 | Gate | Evidence needed before paid launch | Current state |
 | --- | --- | --- |
-| Hosted AI | Approved provider access; actual consented-account chat; correct account model catalog; expiry, refresh, revocation, quota and account-isolation checks; grounded answers against held-out research examples | Blocked on enrollment and implementation; no access request submitted |
+| Hosted AI | Approved provider access; actual consented-account chat; correct account model catalog; expiry, refresh, revocation, quota and account-isolation checks; grounded answers against held-out research examples | Provider, access and commercial model deliberately deferred until the research workflow is stable; no requirement that customers buy a separate ChatGPT subscription has been decided |
 | Complete bilingual journey | Arabic/English navigation, RTL forms and documents, terminology review by Arabic-speaking researchers, accessible keyboard/mobile flows | Review desk bilingual in 0.6; whole product still incomplete |
 | Search coverage | Exact database strategies, dates, result totals, pagination/export ingestion, duplicates and excluded retrievals accounted for; licensed access used legitimately | Current in-app search exploratory, limited to 20 records per request |
-| Screening and reporting | Independent reviewer accounts, blinded decisions, conflict resolution, stage histories, study/report linkage, reconciled PRISMA flow | Single-owner screening ledger and manual study linkage; dual review/complete flow missing |
+| Screening and reporting | Independent reviewer accounts, blinded decisions, conflict resolution, stage histories, study/report linkage, reconciled PRISMA flow | 0.7 adds distinct reviewer identities, concealed decisions, immutable snapshots and owner resolution; real two-account hosted acceptance and complete PRISMA reconciliation remain outstanding |
 | Evidence extraction and appraisal | Pilot extraction, independent checking, source locations, corrected-data tracking, appropriate validated appraisal tools and usable evidence-certainty workflow | Source-linked manual extraction and owner checks; independent review and appraisal incomplete |
 | Analysis | Supported effect calculations, diagnostic checks, independent numerical reference results, transparent exclusions/assumptions and reproducible outputs | Bounded native meta-analysis exists; additional methods/hosted specialist engines incomplete |
 | Thesis delivery | Tested Arabic and English Word/LaTeX/PDF exports, supported citation styles and real university templates, supervisor feedback and revisions | Basic manuscript and numbered-reference exports; full thesis tooling incomplete |
@@ -42,7 +42,7 @@ Proposed comparisons, using the same rights-cleared corpus and independent adjud
 - Arabic readability, RTL correctness, terminology and exported thesis formatting.
 - Successful project recovery/export; time, intervention count and total cost per completed workflow.
 
-Pricing is a hypothesis until costs and willingness to pay are measured. Planned options are a researcher workspace subscription, a supervisor/team plan, and explicitly approved metered heavy compute. No automatic paid plan, unlimited-compute promise, revenue forecast, or provider agreement has been created.
+Pricing is a hypothesis until costs and willingness to pay are measured. Possible options include a researcher workspace subscription, a supervisor/team plan, and explicitly approved metered heavy compute. The AI provider and whether usage is bundled will be decided after workflow validation; a separate customer ChatGPT subscription is not an accepted product requirement. No automatic paid plan, unlimited-compute promise, revenue forecast, or provider agreement has been created.
 
 ## Sources guiding methodology
 

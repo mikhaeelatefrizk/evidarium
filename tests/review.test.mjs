@@ -9,6 +9,15 @@ import {emptyReview,reviewReadiness} from '../lib/review-model.mjs';
 import {createDB,createBucket} from '../companion/storage.mjs';
 
 const quote='At six months, 42 participants completed follow-up.';
+
+test('relinking or deleting evidence between verification and commit cannot save a stale review',async t=>{
+ const f=await setup(t),p=f.prefix.split('/')[1],batch=f.db.batch.bind(f.db),[other]=await(await f.call(f.prefix+'/sources','POST',{title:'Other report',abstract:quote})).json();
+ f.db.raw.prepare('INSERT INTO files(id,project,name,mime,size,key,status,extracted,sha256,created) VALUES(?,?,?,?,?,?,?,?,?,?)').run('race-file',p,'report.txt','text/plain',quote.length,'test/file','extracted',JSON.stringify({segments:[{location:'text',text:quote}]}),'a'.repeat(64),1);f.data.extractions[0].fileId='race-file';f.data.extractions[0].location='text';
+ for(const mutation of ['relink','delete']){
+  f.db.raw.prepare("UPDATE files SET status='extracted',source_id=NULL WHERE id='race-file'").run();let injected=false;f.db.batch=async statements=>{if(!injected){injected=true;if(mutation==='relink')f.db.raw.prepare("UPDATE files SET source_id=?,link_revision=link_revision+1 WHERE id='race-file'").run(other.id);else f.db.raw.prepare("UPDATE files SET status='deleting' WHERE id='race-file'").run();}return batch(statements)};
+  assert.equal((await f.save(f.data)).status,409);assert.equal(f.db.raw.prepare('SELECT count(*) n FROM review_workspaces').get().n,0);assert.equal(f.db.raw.prepare('SELECT count(*) n FROM review_revisions').get().n,0);
+ }
+});
 async function setup(t){
  const root=await mkdtemp(path.join(os.tmpdir(),'evidarium-review-')),db=createDB(path.join(root,'db'),fileURLToPath(new URL('../drizzle',import.meta.url))),bucket=createBucket(path.join(root,'files'));
  t.after(async()=>{db.close();await rm(root,{recursive:true,force:true})});
