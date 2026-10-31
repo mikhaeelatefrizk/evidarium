@@ -1,0 +1,38 @@
+{
+  "recorded_at": "2026-10-31T14:13:56.944Z",
+  "code_commit": "7946c9f5e25e65a76e9820a9ebb3d3da8ebfd4b3",
+  "run_id": 41208873148,
+  "run_url": "https://github.com/mikhaeelatefrizk/evidarium/actions/runs/41208873148",
+  "status": "passed",
+  "jobs": [
+    {
+      "id": 124559479251,
+      "name": "runtime (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T14:12:13Z"
+    },
+    {
+      "id": 124559479459,
+      "name": "runtime (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T14:10:55Z"
+    },
+    {
+      "id": 124559479507,
+      "name": "runtime (macos-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T14:10:58Z"
+    },
+    {
+      "id": 124559479554,
+      "name": "scientific-engines",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T14:13:18Z"
+    }
+  ],
+  "scope": "Real three-platform launcher/dependency/HTTP workflows and tests; Linux scientific-engine and Docker execution checks. Does not verify a live authorized ChatGPT conversation or a private-account browser workflow."
+}

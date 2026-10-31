@@ -1,6 +1,6 @@
 {
   "release": "0.6.0",
-  "recorded_at": "2026-10-31T14:01:50.040136+00:00",
+  "recorded_at": "2026-10-31T14:13:57.686840+00:00",
   "javascript": {
     "passed": 69,
     "failed": 0,
@@ -14,12 +14,12 @@
   },
   "typescript": "passed",
   "local_production_build": "passed",
-  "hosted_build": "passed before final packaging; final package reruns build",
+  "hosted_build": "passed, including final corrected installer package",
   "linux_installer_http": "passed including actual review save, quotation match, history and export",
   "browser": {
     "passed": [
-      "development page loads",
-      "review entry opens",
+      "Published public page loads",
+      "Published review entry opens",
       "Arabic/English switch"
     ],
     "not_verified": [
@@ -28,7 +28,44 @@
       "live ChatGPT authorization and conversation"
     ]
   },
-  "cross_platform_ci": "pending new run; previous version is not evidence for this code",
+  "cross_platform_ci": {
+    "code_commit": "7946c9f5e25e65a76e9820a9ebb3d3da8ebfd4b3",
+    "run_url": "https://github.com/mikhaeelatefrizk/evidarium/actions/runs/41208873148",
+    "status": "passed",
+    "initial_run": "https://github.com/mikhaeelatefrizk/evidarium/actions/runs/41208261303",
+    "initial_result": "Linux, macOS and scientific engines passed; Windows HTTP/unit checks passed but real launcher timed out compiling NumPy under a different interpreter selected by py -3.",
+    "jobs": [
+      {
+        "id": 124559479251,
+        "name": "runtime (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "completed_at": "2026-10-31T14:12:13Z"
+      },
+      {
+        "id": 124559479459,
+        "name": "runtime (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "completed_at": "2026-10-31T14:10:55Z"
+      },
+      {
+        "id": 124559479507,
+        "name": "runtime (macos-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "completed_at": "2026-10-31T14:10:58Z"
+      },
+      {
+        "id": 124559479554,
+        "name": "scientific-engines",
+        "status": "completed",
+        "conclusion": "success",
+        "completed_at": "2026-10-31T14:13:18Z"
+      }
+    ],
+    "record": "ci-0.6.json"
+  },
   "independent_scientific_review": "not performed",
   "hosted_ai": "disabled",
   "earlier_failure": "Two worker-dependent tests initially failed because the restored test environment lacked its interpreter/dependencies. A fresh environment with pinned requirements was installed; all 69 tests then passed."

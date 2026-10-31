@@ -1,0 +1,98 @@
+{
+  "release": "0.6.0",
+  "checks": [
+    {
+      "path": "/api/bootstrap",
+      "http_status": 200,
+      "passed": true
+    },
+    {
+      "path": "/api/science-check",
+      "http_status": 200,
+      "passed": true
+    },
+    {
+      "path": "/api/projects",
+      "http_status": 401,
+      "passed": true
+    },
+    {
+      "path": "/api/projects/unknown/review",
+      "http_status": 401,
+      "passed": true
+    },
+    {
+      "path": "/downloads/evidarium-source.zip",
+      "http_status": 200,
+      "passed": true
+    },
+    {
+      "path": "/downloads/evidarium-local.zip",
+      "http_status": 200,
+      "passed": true
+    },
+    {
+      "path": "/guide.html",
+      "http_status": 200,
+      "passed": true
+    }
+  ],
+  "scope": "Service authorization only; no visitor identity supplied. Not an authenticated browser/private-project walkthrough. The seven initial endpoint checks apply to the initial deployment named here; the final deployment changes the Windows launcher, documentation and downloadable packages. Both final packages were fetched and checksum-verified separately. Browser screenshot shows the unchanged public review entry screen.",
+  "status": "passed",
+  "recorded_at": "2026-10-31T14:11:51.149Z",
+  "site_url": "https://evidarium.mikhaeelatef.chatgpt.site",
+  "browser": {
+    "verified": [
+      "Published review entry opens",
+      "Arabic and English switching"
+    ],
+    "not_verified": [
+      "Signed-in private-project browser workflow",
+      "Mobile and full keyboard/accessibility workflow",
+      "Live ChatGPT inference"
+    ],
+    "screenshot": "review-entry-0.6.jpg"
+  },
+  "initial_deployment_id": "appgdep_6ae5f5391ca48191b5f0d4fab434af2a",
+  "initial_site_source_commit": "33ddcb64adab28e7904e25d9a22083a2e05bf04e",
+  "initial_artifacts": [
+    {
+      "file": "evidarium-source.zip",
+      "bytes": 507915,
+      "sha256": "ad7a213a6984c4f32ea96d3abcbe7cc9f287b8dc5fa8b3512b2d14a681a425b3"
+    },
+    {
+      "file": "evidarium-local.zip",
+      "bytes": 1570854,
+      "sha256": "e33a44d1313d046bf6b914c9ab2d8bdc7650fcd0c704f190bb7dd2d4d16389c0"
+    }
+  ],
+  "current_deployment": {
+    "site_source_commit": "9f8f4b770ff40891d5ade8da561b12f50e950ece",
+    "deployment_id": "appgdep_6ae5f77a8fec81919371fdfdf7ce472c",
+    "published_at": "2026-10-31T14:13:36.252059+00:00",
+    "version_number": 9
+  },
+  "corrected_download_verification": {
+    "recorded_at": "2026-10-31T14:14:53.881Z",
+    "checks": [
+      {
+        "path": "/downloads/evidarium-source.zip",
+        "http_status": 200,
+        "sha256_matches": true,
+        "file": "evidarium-source.zip",
+        "bytes": 545468,
+        "sha256": "c18bfefcea519649de6a9f82c31b84004b95830726b14132e8dbede79cb8bf3c"
+      },
+      {
+        "path": "/downloads/evidarium-local.zip",
+        "http_status": 200,
+        "sha256_matches": true,
+        "file": "evidarium-local.zip",
+        "bytes": 1608407,
+        "sha256": "c120e4e061da246ebd40e6907e1eff97951d727ea27ab299bc07a72ee0eee728"
+      }
+    ],
+    "status": "passed"
+  }
+}

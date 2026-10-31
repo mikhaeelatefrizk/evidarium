@@ -25,7 +25,9 @@ Schema-only migration `0007_review_workspace.sql` adds `review_workspaces` and `
 
 Ten new real SQLite/HTTP tests cover Arabic persistence, quotes and hashes, ownership/origin checks, report uniqueness, concurrent saves, changed reviewed data, exact file locations, import remapping/unverified provenance, CSV safety and bounded history. These are controlled fixtures, not a researcher pilot.
 
-See `docs/validation/review-0.6.json` for this release's actual check results and scope. No previous release's CI pass is represented as a pass for this code. Full authenticated browser testing, independent scientific review, new cross-platform CI and hosted AI are separate gates.
+See `docs/validation/review-0.6.json` and `docs/validation/hosted-0.6.json` for this release's actual check results and scope. The latter records the tested deployment and download checksums. No previous release's CI pass is represented as a pass for this code. Full authenticated browser testing, independent scientific review and hosted AI are separate gates.
+
+The first 0.6 Windows installer run failed: the launcher preferred `py -3`, which selected a different installed Python and attempted a slow source build of NumPy. The launcher now respects the interpreter selected on PATH, reports its version, and uses explicit Python 3.11/3.12 fallbacks when only the Windows launcher is available. [The corrected run](https://github.com/mikhaeelatefrizk/evidarium/actions/runs/41208873148) passed all four jobs: Windows, Linux, macOS and the scientific-engine workflow. Runtime jobs include the real launcher, dependency installation and HTTP application checks; a syntax check alone is not treated as proof of installation. Machine-readable results are in `docs/validation/ci-0.6.json`.
 
 ## Known gaps
 

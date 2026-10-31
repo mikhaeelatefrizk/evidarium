@@ -7,7 +7,7 @@
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.5.0 — early working release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.6.0 — development release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
 
 ## New in 0.5: references and writing on the website
 
