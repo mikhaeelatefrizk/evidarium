@@ -4,9 +4,19 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Install Node
 & node scripts/check-runtime.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Runtime checks failed. Install an official Node.js 24.19+ build with SQLite FTS5.' }
 if (-not (Test-Path '.venv/Scripts/python.exe')) {
-  if (Get-Command py -ErrorAction SilentlyContinue) { & py -3 -m venv .venv } else { & python -m venv .venv }
+  # Respect the Python interpreter selected on PATH (including setup-python).
+  # `py -3` can select a different, newer installation without dependency wheels.
+  if (Get-Command python -ErrorAction SilentlyContinue) {
+    & python -c 'import sys; assert sys.version_info >= (3,11), "Python 3.11+ is required"'
+    if ($LASTEXITCODE -ne 0) { throw 'Select Python 3.11 or 3.12 on PATH, then try again.' }
+    & python -m venv .venv
+  } elseif (Get-Command py -ErrorAction SilentlyContinue) {
+    & py -3.11 -m venv .venv
+    if ($LASTEXITCODE -ne 0) { & py -3.12 -m venv .venv }
+  } else { throw 'Install Python 3.11 or 3.12 and add it to PATH, then try again.' }
   if ($LASTEXITCODE -ne 0) { throw 'Install Python 3.11+ with venv support.' }
 }
+& ./.venv/Scripts/python.exe --version
 & ./.venv/Scripts/python.exe -c 'import sys; assert sys.version_info >= (3,11), "Python 3.11+ is required"'
 if ($LASTEXITCODE -ne 0) { throw 'Python 3.11+ is required.' }
 $requirementsChanged = -not (Test-Path '.venv/evidarium-requirements.txt')
