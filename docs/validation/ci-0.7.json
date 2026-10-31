@@ -1,0 +1,90 @@
+{
+  "release": "0.7.0",
+  "recorded_at": "2026-10-31T15:51:08Z",
+  "code_commit": "0299837e7fd8f7ee51c4b1bf84f5b7f8db5ec70e",
+  "code_url": "https://github.com/mikhaeelatefrizk/evidarium/commit/0299837e7fd8f7ee51c4b1bf84f5b7f8db5ec70e",
+  "run_id": 41216480867,
+  "run_url": "https://github.com/mikhaeelatefrizk/evidarium/actions/runs/41216480867",
+  "status": "passed",
+  "completed_at": "2026-10-31T15:50:00Z",
+  "jobs": [
+    {
+      "id": 124581956046,
+      "name": "runtime (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T15:49:26Z",
+      "javascript": {
+        "passed": 125,
+        "failed": 0,
+        "skipped": 0
+      },
+      "python": {
+        "passed": 13
+      },
+      "bibliography": "passed",
+      "local_production_build": "passed",
+      "real_installer_and_http": "passed"
+    },
+    {
+      "id": 124581956101,
+      "name": "scientific-engines",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T15:49:59Z",
+      "approved_scientific_workflows": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      },
+      "independent_numerical_reference": "passed",
+      "docker_execution_and_boundaries": "passed"
+    },
+    {
+      "id": 124581956160,
+      "name": "runtime (macos-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T15:48:49Z",
+      "javascript": {
+        "passed": 125,
+        "failed": 0,
+        "skipped": 0
+      },
+      "python": {
+        "passed": 13
+      },
+      "bibliography": "passed",
+      "local_production_build": "passed",
+      "real_installer_and_http": "passed"
+    },
+    {
+      "id": 124581956217,
+      "name": "runtime (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "completed_at": "2026-10-31T15:47:56Z",
+      "javascript": {
+        "passed": 125,
+        "failed": 0,
+        "skipped": 0
+      },
+      "python": {
+        "passed": 13
+      },
+      "bibliography": "passed",
+      "local_production_build": "passed",
+      "real_installer_and_http": "passed"
+    }
+  ],
+  "scope": "Real Windows, macOS and Linux runtime tests, dependency installation, local UI builds, launchers and HTTP application checks; Linux scientific adapters, independent numerical references and Docker execution. JavaScript and scientific-workflow counts were confirmed in each job log.",
+  "limitations": [
+    "Synthetic authenticated contexts are not a real hosted two-account acceptance test.",
+    "Passing fixtures do not validate scientific interpretation or establish institutional production readiness.",
+    "This CI run does not test hosted disaster recovery, live ChatGPT subscription inference, or a research pilot."
+  ],
+  "additional_context": {
+    "published_site_checks": "Separately verified by the release workflow; not part of this CI run.",
+    "closed_fixture_restore": "A separate stopped-service copy-and-restore drill passed for controlled synthetic local data, including original bytes and screening archive. It is not a hosted disaster-recovery test."
+  }
+}
