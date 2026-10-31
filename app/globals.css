@@ -11,3 +11,43 @@
 
 /* Research writing and bibliography workflows */
 .research-desk .desk-tabs{display:flex;gap:6px;padding:0 28px 16px;border-bottom:1px solid var(--border,#e1e7e3);flex-wrap:wrap}.desk-tabs button{border:0;border-radius:8px;padding:10px 14px;background:transparent;color:#63766b;font-weight:600}.desk-tabs button.selected{background:#e7efe9;color:#254c3a}.desk-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.desk-actions input,.desk-actions select{flex:1;min-width:180px}.desk-table-wrap{overflow:auto;max-height:360px;border:1px solid #dce5df;border-radius:10px}.desk-table-wrap table{width:100%;border-collapse:collapse;font-size:13px}.desk-table-wrap th,.desk-table-wrap td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #e7ece8}.desk-table-wrap th{background:#f3f6f3;position:sticky;top:0}.desk-table-wrap small{display:block;color:#60756c;margin-top:6px}.draft-input{font:15px/1.7 Georgia,serif!important;min-height:340px;resize:vertical}.draft-preview{width:100%;height:520px;border:1px solid #dce5df;border-radius:10px;background:white}.draft-status{font-size:12px;color:#557568}.revision-row{display:block;border:0;background:#f4f7f4;padding:8px 12px;margin:6px 0;text-align:left;border-radius:6px}.ledger-search{padding:12px 0;border-bottom:1px solid #e3e9e5}.ledger-search p{margin:8px 0}.desk-actions [aria-disabled=true]{opacity:.5;pointer-events:none}@media(max-width:600px){.desk-actions{align-items:stretch}.desk-actions>*{width:100%}.research-desk .desk-tabs{padding:0 16px 12px}.draft-preview{height:420px}}
+
+/* Direction and typography are scoped to this bilingual review workflow. */
+.review-desk {font-size:14px;line-height:1.7;color:#243c34}
+.review-desk[lang="ar"] {font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+.review-intro {padding:24px 28px;background:#edf3e9;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.review-intro h3 {margin:9px 0;font-size:24px;line-height:1.5}
+.review-intro p {margin:0;max-width:520px;color:#50664e}
+.review-intro .eyebrow {font-size:11px;letter-spacing:0}
+.review-intro button {flex-shrink:0}
+.review-metrics {display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px 28px}
+.review-metrics>div {display:flex;flex-direction:column;border-inline-start:2px solid #bfd0b7;padding-inline-start:14px}
+.review-metrics strong {font-size:25px;font-weight:500}
+.review-metrics span {font-size:12px;color:#51654c}
+.review-desk .desk-tabs {overflow-x:auto;gap:6px;padding-inline:22px}
+.review-desk .desk-tabs button {font-size:13px;white-space:nowrap;min-height:44px}
+.review-body p {font-size:13px;color:#4d5d49}
+.review-note {background:#f2f5ef;border-inline-start:3px solid #79916f;padding:12px 15px;border-radius:5px}
+.review-fields {padding:0;margin:0;border:0;min-width:0}
+.review-fields label,.review-savebar label {display:flex;flex-direction:column;gap:7px;font-size:13px;margin-block:14px}
+.review-fields .check-label {flex-direction:row;align-items:flex-start;gap:9px}
+.review-fields .check-label input {margin-top:6px;flex:none}
+.review-fields input,.review-fields textarea,.review-fields select,.review-savebar input {font-size:14px;min-width:0;width:100%}
+.review-fields input[type="checkbox"] {width:auto;min-height:20px;min-width:20px}
+.review-form-grid {display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.review-section-heading {display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.review-section-heading h3 {margin-bottom:0}
+.review-report-picker {max-height:320px;overflow:auto;border:1px solid #dbe4d4;border-radius:10px;padding:10px 16px}
+.review-entry-form {padding:18px;background:#f3f6ef;border:1px solid #d4dfcb;border-radius:12px;margin-block:18px}
+.review-entry {padding:18px;border:1px solid #dce4d5;border-radius:12px;margin-block:15px;background:white;overflow-wrap:anywhere}
+.review-entry>div:first-child {display:flex;justify-content:space-between;gap:10px}
+.review-entry blockquote {border-inline-start:3px solid #bccfaf;padding-inline-start:14px;margin:15px 0;color:#44553c}
+.review-desk .primary,.review-desk .secondary,.review-desk .text-button {font-size:13px;min-height:42px}
+.review-desk .fine-print,.review-desk small {font-size:12px;color:#53654d}
+.review-savebar {padding:18px 28px 24px;background:#f2f5ed;border-top:1px solid #d4dfca}
+.review-savebar>div:first-child {font-size:13px;font-weight:600}
+.review-desk .desk-actions {display:flex;flex-wrap:wrap;gap:8px}
+.review-history {padding:16px 0;border-bottom:1px solid #e0e6d9}
+.review-history button {margin-inline-start:15px}
+.review-history p {margin:5px 0}
+@media(max-width:600px){.review-form-grid{grid-template-columns:1fr}.review-intro{padding:20px}.review-metrics{grid-template-columns:1fr 1fr;padding:15px 20px}.review-intro h3{font-size:21px}.review-savebar{padding:18px 20px}.review-body{padding:20px!important}.review-desk .desk-tabs{padding-inline:12px}}

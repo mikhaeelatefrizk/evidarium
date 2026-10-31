@@ -1,0 +1,35 @@
+{
+  "release": "0.6.0",
+  "recorded_at": "2026-10-31T14:01:50.040136+00:00",
+  "javascript": {
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0,
+    "new_review_checks": 10,
+    "command": "EVIDARIUM_TEST_PYTHON=<installed validation environment>/bin/python node --test tests/*.test.mjs"
+  },
+  "python": {
+    "passed": 13,
+    "failed": 0
+  },
+  "typescript": "passed",
+  "local_production_build": "passed",
+  "hosted_build": "passed before final packaging; final package reruns build",
+  "linux_installer_http": "passed including actual review save, quotation match, history and export",
+  "browser": {
+    "passed": [
+      "development page loads",
+      "review entry opens",
+      "Arabic/English switch"
+    ],
+    "not_verified": [
+      "authenticated private-project forms",
+      "complete mobile/accessibility pass",
+      "live ChatGPT authorization and conversation"
+    ]
+  },
+  "cross_platform_ci": "pending new run; previous version is not evidence for this code",
+  "independent_scientific_review": "not performed",
+  "hosted_ai": "disabled",
+  "earlier_failure": "Two worker-dependent tests initially failed because the restored test environment lacked its interpreter/dependencies. A fresh environment with pinned requirements was installed; all 69 tests then passed."
+}

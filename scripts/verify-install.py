@@ -35,7 +35,7 @@ def main():
                     req=urllib.request.Request(origin+'/api/'+route,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json'},method=method or ('POST' if body is not None else 'GET'))
                     with urllib.request.urlopen(req,timeout=10) as response:return json.load(response)
                 prefix='projects/'+p['id']
-                bibliography={'format':'csl-json','text':json.dumps([{'title':'Installer reference','type':'article-journal','DOI':'10.1234/install-check','author':[{'family':'Example','given':'A'}],'issued':{'date-parts':[[2024]]}}])}
+                bibliography={'format':'csl-json','text':json.dumps([{'title':'Installer reference','abstract':'Forty participants completed the six-month follow-up.','type':'article-journal','DOI':'10.1234/install-check','author':[{'family':'Example','given':'A'}],'issued':{'date-parts':[[2024]]}}])}
                 preview=request(prefix+'/bibliography/preview',bibliography)
                 imported=request(prefix+'/bibliography/import',{**bibliography,'sha256':preview['sha256']})
                 assert imported['added']==1
@@ -47,7 +47,16 @@ def main():
                 rendered=request(prefix+'/manuscripts/'+draft['id']+'/preview',{'title':draft['title'],'content':text})
                 assert rendered['references'][0]['id']==source['id'] and not rendered['issues']
                 assert request(prefix+'/screening-ledger')['total_records']==1
-                print(json.dumps({'status':'passed','platform':sys.platform,'python':sys.version.split()[0],'checks':['real launcher','dependency installation','bootstrap','production UI asset served','project creation','project export','bibliography preview and import','draft save and numbered citation preview','screening ledger'],'scope':'HTTP installation check; no browser, OAuth, or model inference'}))
+                review=request(prefix+'/review')
+                review['data']['protocol']['question']='ما أثر التدخل؟'
+                review['data']['studies']=[{'id':'study-a','label':'Study A','sourceIds':[source['id']]}]
+                review['data']['extractions']=[{'id':'entry-a','studyId':'study-a','sourceId':source['id'],'field':'Completed follow-up','value':'40','quote':'Forty participants completed the six-month follow-up.','reviewStatus':'unchecked'}]
+                checked=request(prefix+'/review',{'data':review['data'],'revision':0,'reason':'Installer extraction check'},'PUT')
+                assert checked['revision']==1 and checked['data']['extractions'][0]['verification']['method']=='exact substring match'
+                assert request(prefix+'/review/export')['history'][0]['reason']=='Installer extraction check'
+                assert request(prefix+'/export')['review_workspace']['data']['protocol']['question']=='ما أثر التدخل؟'
+
+                print(json.dumps({'status':'passed','platform':sys.platform,'python':sys.version.split()[0],'checks':['real launcher','dependency installation','bootstrap','production UI asset served','project creation','project export','bibliography preview and import','draft save and numbered citation preview','screening ledger','bilingual review save, evidence check, history and export'],'scope':'HTTP installation check; no browser, OAuth, or model inference'}))
             finally:
                 if process.poll() is None:
                     if os.name=='nt':subprocess.run(['taskkill','/pid',str(process.pid),'/T','/F'],capture_output=True)

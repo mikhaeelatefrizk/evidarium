@@ -1,5 +1,8 @@
 # Evidarium
 
+
+**Current development release: 0.6.** Arabic/English systematic-review protocols, study/report linkage, evidence-checked extraction and revision history. [Release details](docs/release-0.6.md) · [Phase 1 scope and paid-launch gates](docs/phase-1-product.md). This is not yet the complete paid product.
+
 **Research you can trace.** A chat-centered research workspace connecting literature, original files, screening decisions, explicit evidence, and recorded computation.
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
