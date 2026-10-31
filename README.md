@@ -1,13 +1,19 @@
 # Evidarium
 
 
-**Current development release: 0.7.** Independent reviewer invitations, concealed decisions, immutable evidence snapshots, recorded conflict resolution and stronger save/import recovery. [Release details](docs/release-0.7.md) · [Phase 1 scope and paid-launch gates](docs/phase-1-product.md). This is not yet the complete paid product.
+**Current development release: 0.8.** Separate English and Arabic interfaces, a redesigned research workspace, responsive review desks and localized manuscript previews, with original evidence and drafts preserved. [Release details](docs/release-0.8.md) · [Phase 1 scope and paid-launch gates](docs/phase-1-product.md). This is not yet the complete paid product.
 
 **Research you can trace.** A chat-centered research workspace connecting literature, original files, screening decisions, explicit evidence, and recorded computation.
 
 [Open the hosted workspace](https://evidarium.mikhaeelatef.chatgpt.site) · [User guide](https://evidarium.mikhaeelatef.chatgpt.site/guide.html) · [Download the local edition](https://evidarium.mikhaeelatef.chatgpt.site/downloads/evidarium-local.zip)
 
-**Release 0.7.0 — development release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+**Release 0.8.0 — development release.** This repository contains working application code and real integrations, with the verification boundaries documented below. It is not a validated autonomous scientist, a replacement for supervision or laboratory work, or an established breakthrough. It does not promise perfect answers, unlimited files/context, or universal format understanding.
+
+## New in 0.8: a coherent English or Arabic workspace
+
+The shared language control updates navigation, review forms, analysis displays, known errors and status notices, and the complete guide. Arabic uses a right-to-left interface. Language changes preserve unsaved project, protocol and manuscript text; original research content and technical interchange fields keep their supplied values. HTML and Markdown manuscript presentation exports support the selected language.
+
+The redesigned workspace has clearer navigation, readable controls, focused project actions, larger review panels and mobile keyboard navigation. Checks cover 138 JavaScript tests, 13 Python tests, independent bibliography readers, numerical fixtures, TypeScript, translation coverage, browser workflows and the actual Windows launcher. See [release 0.8](docs/release-0.8.md) for what was checked and the remaining hosted-account, recovery and scientific-review requirements. AI provision and pricing remain deferred; a separate personal AI subscription is not a product requirement.
 
 ## New in 0.7: independent screening
 
@@ -78,7 +84,7 @@ The real account-specific model catalog is fetched after authorization. The sele
 2. Download and extract `evidarium-local.zip` from the link above.
 3. macOS/Linux: run `bash start.sh`. Windows: run `./start-windows.ps1` from PowerShell. If your system policy blocks scripts, follow your organization's approved procedure; you can also run the documented commands in [Local setup](docs/local-setup.md) individually.
 4. Keep the terminal open. The app opens the loopback URL above.
-5. Choose **Connect your research engine → Continue with ChatGPT**. Complete authorization on OpenAI's site. Choose an available model and send a message.
+5. Optional: the existing local model connection is under **Research engine settings → Continue with ChatGPT**. Use it only if you choose to authorize an eligible account. Evidence, review, native analysis and writing workflows do not require this connection.
 6. Create a project, upload a file, prepare an analysis, review it under **Activity**, then approve.
 
 The local ZIP includes XML, statistics and PDF-reader JavaScript dependencies. The launcher creates a project-local `.venv` and downloads the pinned base Python packages. It does not install heavyweight scientific engines, Docker, R, Julia, or model weights. A secure OS credential store is required. Linux needs a working Secret Service/keyring session.

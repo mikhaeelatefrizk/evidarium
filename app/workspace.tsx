@@ -1,116 +1,450 @@
 'use client';
-import {useCallback,useEffect,useRef,useState} from 'react';
-import {ReviewDesk} from './review-desk';
-import {ScreeningDesk} from './screening-desk';
-import {ResearchDesk} from './research-desk';
-import {uploadFile} from '../lib/upload-client.mjs';
-import {AnalysisResult,WebsiteCheck} from './analysis-results';
-import {ProjectSearch,FullTextImport,CitationReport,LiveVerification} from './research-tools';
-import {ArrowUp,ArrowUpRight,BookOpen,Check,ChevronDown,ChevronRight,Download,FileText,FlaskConical,FolderOpen,History,Layers,Link2,Loader2,Menu,MoreHorizontal,Paperclip,Plus,Search,Settings2,ShieldCheck,Sparkles,Terminal,Trash2,X,Play,Square,ExternalLink,PanelRightClose,PanelRightOpen,Command,Network,Quote} from 'lucide-react';
-type Obj=Record<string,any>;
-async function api(path:string,method='GET',data?:unknown){const res=await fetch('/api/'+path,{method,headers:data?{'Content-Type':'application/json'}:undefined,body:data?JSON.stringify(data):undefined});const v:any=await res.json();if(!res.ok)throw Error(v.error||v.detail||'Request failed');return v}
-const bytes=(n:number)=>n>=1024**3?(n/1024**3).toFixed(1)+' GiB':n>=1024**2?(n/1024**2).toFixed(1)+' MiB':Math.ceil(n/1024)+' KiB';
-function RichText({text,onCitation}:{text:string,onCitation?:(kind:string,id:string)=>void}){
- const inline=(line:string)=>line.split(/(\*\*[^*]+\*\*|\[(?:S|F):[^\]]+\]|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/).map((s,k)=>{if(s.startsWith('**'))return <strong key={k}>{s.slice(2,-2)}</strong>;const cite=s.match(/^\[([SF]):([a-f0-9-]{36})(?:,[^\]]*)?\]$/);if(cite&&onCitation)return <button className="citation" key={k} title={s} onClick={()=>onCitation(cite[1],cite[2])}>{cite[1]==='S'?'Source':'Passage'} ↗</button>;const link=s.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);return link?<a key={k} href={link[2]} target="_blank" rel="noreferrer">{link[1]}</a>:s});
- return <div className="rich-text">{text.split(/```/).map((part,i)=>i%2?<pre key={i}><code>{part.replace(/^\w+\n/,'')}</code></pre>:<div key={i}>{part.split('\n').map((line,j)=><div key={j} className={line.startsWith('#')?'text-heading':''}>{inline(line.replace(/^#{1,4}\s/,''))}{!line&&<br/>}</div>)}</div>)}</div>
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { LocaleProvider, useLocale, LanguageSwitch, localizeMessage } from './i18n';
+import { ReviewDesk } from './review-desk';
+import { ScreeningDesk } from './screening-desk';
+import { ResearchDesk } from './research-desk';
+import { uploadFile } from '../lib/upload-client.mjs';
+import { AnalysisResult, WebsiteCheck } from './analysis-results';
+import { ProjectSearch, FullTextImport, CitationReport, LiveVerification } from './research-tools';
+import { ArrowUp, ArrowUpRight, BookOpen, Check, ChevronDown, ChevronRight, Download, FileText, FlaskConical, FolderOpen, History, Layers, Link2, Loader2, Menu, MoreHorizontal, Paperclip, Plus, Search, Settings2, ShieldCheck, Sparkles, Terminal, Trash2, X, Play, Square, ExternalLink, PanelRightClose, PanelRightOpen, Command, Network, Quote } from 'lucide-react';
+type Obj = Record<string, any>;
+async function api(path: string, method = 'GET', data?: unknown) { const res = await fetch('/api/' + path, { method, headers: data ? { 'Content-Type': 'application/json' } : undefined, body: data ? JSON.stringify(data) : undefined }); let v: any; try { v = await res.json(); } catch { throw Error('The server returned an unreadable response. Please retry.'); } if (!res.ok)
+    throw Error(v.error || v.detail || 'Request failed'); return v; }
+function RichText({ text, onCitation }: {
+    text: string;
+    onCitation?: (kind: string, id: string) => void;
+}) {
+    const { t: tr } = useLocale();
+    const inline = (line: string) => line.split(/(\*\*[^*]+\*\*|\[(?:S|F):[^\]]+\]|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/).map((s, k) => { if (s.startsWith('**'))
+        return <strong key={k}>{s.slice(2, -2)}</strong>; const cite = s.match(/^\[([SF]):([a-f0-9-]{36})(?:,[^\]]*)?\]$/); if (cite && onCitation)
+        return <button className="citation" key={k} title={s} onClick={() => onCitation(cite[1], cite[2])}>{tr(cite[1] === 'S' ? 'Source' : 'Passage')} ↗</button>; const link = s.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/); return link ? <a key={k} href={link[2]} target="_blank" rel="noreferrer">{link[1]}</a> : s; });
+    return <div className="rich-text" dir="auto">{text.split(/```/).map((part, i) => i % 2 ? <pre key={i}><code>{part.replace(/^\w+\n/, '')}</code></pre> : <div key={i}>{part.split('\n').map((line, j) => <div key={j} className={line.startsWith('#') ? 'text-heading' : ''}>{inline(line.replace(/^#{1,4}\s/, ''))}{!line && <br />}</div>)}</div>)}</div>;
 }
-export default function Workspace(){
- const [boot,setBoot]=useState<Obj|null>(null),[projects,setProjects]=useState<Obj[]>([]),[pid,setPid]=useState(''),[data,setData]=useState<Obj|null>(null),[input,setInput]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[panel,setPanel]=useState('evidence'),[openPanel,setOpenPanel]=useState(true),[mobileNav,setMobileNav]=useState(false),[modal,setModal]=useState(''),[query,setQuery]=useState(''),[provider,setProvider]=useState('europepmc'),[results,setResults]=useState<Obj[]>([]),[searching,setSearching]=useState(false),[uploading,setUploading]=useState(''),[models,setModels]=useState<Obj[]>([]),[model,setModel]=useState(''),[auth,setAuth]=useState<Obj>({connected:false}),[title,setTitle]=useState(''),[question,setQuestion]=useState(''),[criteria,setCriteria]=useState(''),[tool,setTool]=useState('web_describe_csv'),[fileId,setFileId]=useState(''),[toolArgs,setToolArgs]=useState('{}'),[metaEffect,setMetaEffect]=useState('yi'),[metaVariance,setMetaVariance]=useState('vi'),[metaLabel,setMetaLabel]=useState(''),[metaIndependent,setMetaIndependent]=useState(false),[taskBusy,setTaskBusy]=useState(''),[claimText,setClaimText]=useState(''),[claimQuote,setClaimQuote]=useState(''),[claimEvidence,setClaimEvidence]=useState(''),[claimLocation,setClaimLocation]=useState('text'),[claimStance,setClaimStance]=useState('supports'),[allowSearch,setAllowSearch]=useState(true),[extraction,setExtraction]=useState<Obj|null>(null);
- const [olderMessages,setOlderMessages]=useState<Obj[]>([]),[olderPage,setOlderPage]=useState<Obj|null>(null),[loadingOlder,setLoadingOlder]=useState(false),[openRecord,setOpenRecord]=useState<Obj|null>(null),[retrievalQuery,setRetrievalQuery]=useState('');
- useEffect(()=>{setOlderMessages([]);setOlderPage(null)},[pid]);
- async function loadOlder(){setLoadingOlder(true);try{const cursor=olderPage?.before_id||data?.message_page?.before_id;const result=await api('projects/'+pid+'/messages?before='+encodeURIComponent(cursor));setOlderMessages(old=>[...result.messages,...old]);setOlderPage(result)}catch(e){flash(e)}finally{setLoadingOlder(false)}}
- const end=useRef<HTMLDivElement>(null),fileRef=useRef<HTMLInputElement>(null),importRef=useRef<HTMLInputElement>(null),composer=useRef<HTMLTextAreaElement>(null);
- const [draftDirty,setDraftDirty]=useState(false),[deletingFile,setDeletingFile]=useState('');
- useEffect(()=>{let hasInvitation=false;try{hasInvitation=!!sessionStorage.getItem('evidarium.screening.invitation')}catch{}if(window.location.hash.startsWith('#review-invite=')||new URLSearchParams(window.location.search).get('screening')==='1'||hasInvitation)setModal('screening')},[]);
- const draftDirtyRef=useRef(false);draftDirtyRef.current=draftDirty;
- const resumeRef=useRef<HTMLInputElement>(null),resumeFile=useRef<Obj|null>(null);
- const closeModal=()=>{if(draftDirtyRef.current&&!confirm('Discard unsaved changes? Save or download your draft first. تجاهل التغييرات غير المحفوظة؟ احفظ المسودة أو نزّلها أولاً.'))return;setDraftDirty(false);setModal('')};
- const modalRef=useRef<HTMLElement>(null);
- useEffect(()=>{if(!modal)return;const previous=document.activeElement as HTMLElement;const el=modalRef.current;const list=()=>Array.from(el?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input,select,textarea,[tabindex="0"]')||[]);list()[0]?.focus();const key=(e:KeyboardEvent)=>{if(e.key==='Escape')closeModal();if(e.key==='Tab'){const items=list(),first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};document.addEventListener('keydown',key);return()=>{document.removeEventListener('keydown',key);previous?.focus()}},[modal]);
- const flash=(e:unknown)=>setError(e instanceof Error?e.message:String(e));
- const refresh=useCallback(async(id=pid)=>{if(id)setData(await api('projects/'+id))},[pid]);
- const loadProjects=useCallback(async()=>{const p=await api('projects');setProjects(p);return p},[]);
- const refreshAuth=useCallback(async()=>{try{const a=await api('ai/status');setAuth(a);if(a.models){setModels(a.models);setModel(old=>old&&a.models.some((m:Obj)=>m.slug===old)?old:a.preferred_model||a.models[0]?.slug||'')}}catch{}},[]);
- useEffect(()=>{api('bootstrap').then(async b=>{setBoot(b);if(b.user){const p=await loadProjects();if(p[0])setPid(p[0].id)}if(b.local)refreshAuth()}).catch(flash)},[loadProjects,refreshAuth]);
- useEffect(()=>{if(pid)refresh(pid).catch(flash)},[pid,refresh]);
- useEffect(()=>{if(!boot?.local)return;const timer=setInterval(()=>{if(pid)refresh().catch(()=>{});if(!auth.connected)refreshAuth()},2500);return()=>clearInterval(timer)},[boot,pid,refresh,auth.connected,refreshAuth]);
- useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'})},[data?.messages?.at(-1)?.id,busy]);
- useEffect(()=>{const f=(e:KeyboardEvent)=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(!modal)setModal('search')}};window.addEventListener('keydown',f);return()=>window.removeEventListener('keydown',f)},[modal]);
- async function createProject(e:React.FormEvent){e.preventDefault();setBusy(true);try{const p=await api('projects','POST',{title,question,criteria});await loadProjects();setPid(p.id);setModal('');setTitle('');setQuestion('');setCriteria('')}catch(e){flash(e)}finally{setBusy(false)}}
- async function ensureProject(){if(pid)return pid;const p=await api('projects','POST',{title:'My research project'});await loadProjects();setPid(p.id);return p.id}
- async function search(q=query){if(!q.trim())return;setSearching(true);setError('');try{const id=await ensureProject();const rows=await api('search','POST',{project:id,query:q,provider});setResults(rows);setQuery(q);setModal('search');await refresh(id)}catch(e){flash(e)}finally{setSearching(false)}}
- async function addSource(s:Obj){try{const id=await ensureProject();await api('projects/'+id+'/sources','POST',s);await refresh(id);setResults(r=>r.map(x=>x===s?{...x,added:true}:x))}catch(e){flash(e)}}
- async function screen(s:Obj,decision:string){let reason=s.reason||'';if(decision==='exclude'){const r=prompt('Why is this record excluded at this stage?',reason);if(r===null)return;reason=r}try{await api('sources/'+s.id,'PATCH',{decision,stage:s.stage,reason});await refresh()}catch(e){flash(e)}}
- async function send(){const text=input.trim();if(!text||busy)return;setError('');if(!boot?.user){setModal('connect');return}if(text.startsWith('/find ')){setRetrievalQuery(text.slice(6));setModal('retrieve');setInput('');return}if(text.startsWith('/search ')){setInput('');await search(text.slice(8));return}if(text.startsWith('/note ')){const id=await ensureProject();await api('projects/'+id+'/notes','POST',{content:text.slice(6)});setInput('');setPanel('notes');setOpenPanel(true);await refresh(id);return}if(!boot.local||!auth.connected){setModal('connect');return}if(!model){flash('Select an available model first.');return}setBusy(true);try{const id=await ensureProject();await api('chat','POST',{project:id,text,model});setInput('');await refresh(id)}catch(e){flash(e)}finally{setBusy(false)}}
- async function upload(list:FileList|null,resume?:Obj){if(!list)return;setError('');let project=pid;try{project=await ensureProject();for(const file of Array.from(list)){if(file.size>boot!.limits.fileBytes)throw Error('This workspace accepts files up to 2 GiB.');await uploadFile({file,project,fileId:resume?.id,onProgress:(text='')=>setUploading(file.name+' · '+text)});setPanel('files');setOpenPanel(true)}}catch(e){flash(e)}finally{setUploading('');if(project)await refresh(project).catch(flash);if(fileRef.current)fileRef.current.value='';if(resumeRef.current)resumeRef.current.value=''}}
- async function importProject(file?:File){if(!file)return;try{if(file.size>2*1024**2)throw Error('Project metadata import is limited to 2 MiB.');const b=JSON.parse(await file.text());const id=await ensureProject();await api('projects/'+id+'/import','POST',b);await refresh(id);setModal('')}catch(e){flash(e)}}
- async function createTask(e:React.FormEvent){e.preventDefault();try{const id=await ensureProject();const args={...(tool==='web_meta_analysis'?{effect:metaEffect,variance:metaVariance,...(metaLabel?{label:metaLabel}:{}),independent_effects_confirmed:metaIndependent}:tool.startsWith('web_')?{}:JSON.parse(toolArgs)),...(fileId?{file_id:fileId}:{})};await api('tasks','POST',{project:id,kind:tool,args});await refresh(id);setModal('');setPanel('activity');setOpenPanel(true)}catch(e){flash(e)}}
- async function taskAction(t:Obj,action:string){setTaskBusy(t.id);try{await api('tasks/'+t.id+'/'+action,'POST',{});await refresh()}catch(e){flash(e)}finally{setTaskBusy('')}}
- async function login(){try{const a=await api('ai/login','POST',{});setAuth(a);setTimeout(refreshAuth,1500)}catch(e){flash(e)}}
- const claims=data?.claims||[];
- const p=data?.project, sources=data?.sources||[], files=data?.files||[], msgs=[...olderMessages,...(data?.messages||[])].filter((m,i,a)=>a.findIndex(x=>x.id===m.id)===i),tasks=data?.tasks||[];const working=tasks.some((t:Obj)=>t.kind==='chat'&&['running','queued'].includes(t.state));
- return <div className="app-shell">
-  <aside className={'sidebar '+(mobileNav?'mobile-open':'')}>
-   <a className="brand" href="/"><span className="brand-mark">E<span>•</span></span><span>Evidarium<small>RESEARCH WORKSPACE</small></span></a>
-   <button className="new-project" onClick={()=>{setModal('new');setMobileNav(false)}}><Plus size={17}/> New research project <span>↗</span></button>
-   <button className="nav-item" onClick={()=>setModal('search')}><Search size={17}/> Search literature <kbd>⌘ K</kbd></button>
-   <button className="nav-item" onClick={()=>{setRetrievalQuery('');setModal('retrieve')}}><History size={17}/> Search this project</button>
-   <button className="nav-item" onClick={()=>{setModal('tool')}}><FlaskConical size={17}/> Run an analysis</button>
-   <button className="nav-item" disabled={!boot?.user} onClick={async()=>{try{await ensureProject();setModal('research')}catch(e){flash(e)}}}><FileText size={17}/> Writing & references</button>
-   <button className="nav-item" onClick={()=>setModal('review')}><Layers size={17}/> Systematic review · المراجعة</button>
-   <button className="nav-item" onClick={()=>setModal('screening')}><ShieldCheck size={17}/> Independent review · المراجعة المستقلة</button>
-   <div className="nav-label">YOUR PROJECTS <span>{projects.length}</span></div>
-   <div className="project-list">{projects.map(x=><button key={x.id} className={'project-item '+(pid===x.id?'active':'')} onClick={()=>{setPid(x.id);setMobileNav(false)}}><FolderOpen size={16}/><span>{x.title}</span>{pid===x.id&&<span className="tiny-dot"/>}</button>)}{!projects.length&&<p className="sidebar-empty">Your research starts here.<br/>Create a project to keep its evidence together.</p>}</div>
-   <div className="sidebar-bottom"><div className="workspace-card"><ShieldCheck size={20}/><div><strong>Your work. Your record.</strong><p>{boot?.local?'Files are stored here. Relevant text is sent to your selected model.':'Your signed-in projects are private to you.'}</p></div></div>
-    <button className="nav-item" onClick={()=>setModal('guide')}><BookOpen size={17}/> How Evidarium works <ArrowUpRight size={14}/></button>
-    <button className="account" onClick={()=>setModal('connect')}><span className="avatar">{boot?.user?.displayName?.slice(0,1).toUpperCase()||'R'}</span><span>{boot?.user?.displayName?.split('@')[0]||'Research workspace'}<small>{boot?.local?'Local edition':'Hosted edition'} · v0.7</small></span><Settings2 size={16}/></button>
+export default function Workspace() { return <LocaleProvider><WorkspaceBody /></LocaleProvider>; }
+function WorkspaceBody() {
+    const { locale, ar, t: tr, label, formatDate, formatNumber, formatBytes } = useLocale();
+    const guideHref = (ar ? '/guide-ar.html' : '/guide.html') + '?lang=' + locale;
+    const signinHref = '/signin-with-chatgpt?return_to=' + encodeURIComponent('/?lang=' + locale);
+    const [boot, setBoot] = useState<Obj | null>(null), [projects, setProjects] = useState<Obj[]>([]), [pid, setPid] = useState(''), [data, setData] = useState<Obj | null>(null), [input, setInput] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [panel, setPanel] = useState('evidence'), [openPanel, setOpenPanel] = useState(true), [mobileNav, setMobileNav] = useState(false), [modal, setModal] = useState(''), [query, setQuery] = useState(''), [provider, setProvider] = useState('europepmc'), [results, setResults] = useState<Obj[]>([]), [searching, setSearching] = useState(false), [uploading, setUploading] = useState(''), [models, setModels] = useState<Obj[]>([]), [model, setModel] = useState(''), [auth, setAuth] = useState<Obj>({ connected: false }), [title, setTitle] = useState(''), [question, setQuestion] = useState(''), [criteria, setCriteria] = useState(''), [tool, setTool] = useState('web_describe_csv'), [fileId, setFileId] = useState(''), [toolArgs, setToolArgs] = useState('{}'), [metaEffect, setMetaEffect] = useState('yi'), [metaVariance, setMetaVariance] = useState('vi'), [metaLabel, setMetaLabel] = useState(''), [metaIndependent, setMetaIndependent] = useState(false), [taskBusy, setTaskBusy] = useState(''), [claimText, setClaimText] = useState(''), [claimQuote, setClaimQuote] = useState(''), [claimEvidence, setClaimEvidence] = useState(''), [claimLocation, setClaimLocation] = useState('text'), [claimStance, setClaimStance] = useState('supports'), [allowSearch, setAllowSearch] = useState(true), [extraction, setExtraction] = useState<Obj | null>(null);
+    const [olderMessages, setOlderMessages] = useState<Obj[]>([]), [olderPage, setOlderPage] = useState<Obj | null>(null), [loadingOlder, setLoadingOlder] = useState(false), [openRecord, setOpenRecord] = useState<Obj | null>(null), [retrievalQuery, setRetrievalQuery] = useState('');
+    useEffect(() => { setOpenPanel(window.innerWidth >= 1280); }, []);
+    useEffect(() => { setMobileNav(false); }, [modal]);
+    useEffect(() => { setOlderMessages([]); setOlderPage(null); }, [pid]);
+    async function loadOlder() { setLoadingOlder(true); try {
+        const cursor = olderPage?.before_id || data?.message_page?.before_id;
+        const result = await api('projects/' + pid + '/messages?before=' + encodeURIComponent(cursor));
+        setOlderMessages(old => [...result.messages, ...old]);
+        setOlderPage(result);
+    }
+    catch (e) {
+        flash(e);
+    }
+    finally {
+        setLoadingOlder(false);
+    } }
+    const end = useRef<HTMLDivElement>(null), fileRef = useRef<HTMLInputElement>(null), importRef = useRef<HTMLInputElement>(null), composer = useRef<HTMLTextAreaElement>(null);
+    const [uploadName, setUploadName] = useState(''), [claimLocations, setClaimLocations] = useState<string[]>([]);
+    const [draftDirty, setDraftDirty] = useState(false), [deletingFile, setDeletingFile] = useState('');
+    useEffect(() => { let hasInvitation = false; try {
+        hasInvitation = !!sessionStorage.getItem('evidarium.screening.invitation');
+    }
+    catch { } if (window.location.hash.startsWith('#review-invite=') || new URLSearchParams(window.location.search).get('screening') === '1' || hasInvitation)
+        setModal('screening'); }, []);
+    const draftDirtyRef = useRef(false);
+    draftDirtyRef.current = draftDirty;
+    const resumeRef = useRef<HTMLInputElement>(null), resumeFile = useRef<Obj | null>(null);
+    const closeModal = () => { if (draftDirtyRef.current && !confirm(localizeMessage('Discard unsaved changes? Save or download your draft first.')))
+        return; setDraftDirty(false); setModal(''); };
+    const modalRef = useRef<HTMLElement>(null), navRef = useRef<HTMLElement>(null), navButtonRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (!mobileNav) return;
+        const items = () => Array.from(navRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])') || []).filter(el => el.getClientRects().length > 0);
+        items()[0]?.focus();
+        const key = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') { event.preventDefault(); setMobileNav(false); }
+            if (event.key === 'Tab') { const list = items(), first = list[0], last = list[list.length-1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+            }
+        };
+        const resized = () => { if (window.innerWidth >= 760) setMobileNav(false); };
+        document.addEventListener('keydown',key); window.addEventListener('resize',resized);
+        return () => { document.removeEventListener('keydown',key); window.removeEventListener('resize',resized); if (!modalRef.current) navButtonRef.current?.focus(); };
+    }, [mobileNav]);
+    useEffect(() => {
+        let active = true; setClaimLocations([]);
+        if (claimEvidence.startsWith('file:')) {
+            setClaimLocation('');
+            api('files/'+claimEvidence.slice(5)+'/text').then(result => { if (!active) return;
+                const locations = [...new Set<string>((result.segments || []).map((segment: Obj) => String(segment.location)))];
+                setClaimLocations(locations); setClaimLocation(locations[0] || '');
+            }).catch(e => { if (active) setError(e instanceof Error ? e.message : String(e)); });
+        }
+        return () => { active = false; };
+    }, [claimEvidence]);
+    useEffect(() => { if (!modal)
+        return; const previous = document.activeElement as HTMLElement; const el = modalRef.current; const list = () => Array.from(el?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input,select,textarea,[tabindex="0"]') || []); list()[0]?.focus(); const key = (e: KeyboardEvent) => { if (e.key === 'Escape')
+        closeModal(); if (e.key === 'Tab') {
+        const items = list(), first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last?.focus();
+        }
+        else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+        }
+    } }; document.addEventListener('keydown', key); return () => { document.removeEventListener('keydown', key); if(previous?.getClientRects().length) previous.focus(); else navButtonRef.current?.focus(); }; }, [modal]);
+    const flash = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+    const refresh = useCallback(async (id = pid) => { if (id)
+        setData(await api('projects/' + id)); }, [pid]);
+    const loadProjects = useCallback(async () => { const p = await api('projects'); setProjects(p); return p; }, []);
+    const refreshAuth = useCallback(async () => { try {
+        const a = await api('ai/status');
+        setAuth(a);
+        if (a.models) {
+            setModels(a.models);
+            setModel(old => old && a.models.some((m: Obj) => m.slug === old) ? old : a.preferred_model || a.models[0]?.slug || '');
+        }
+    }
+    catch { } }, []);
+    useEffect(() => { api('bootstrap').then(async (b) => { setBoot(b); if (b.user) {
+        const p = await loadProjects();
+        if (p[0])
+            setPid(p[0].id);
+    } if (b.local)
+        refreshAuth(); }).catch(flash); }, [loadProjects, refreshAuth]);
+    useEffect(() => { if (pid)
+        refresh(pid).catch(flash); }, [pid, refresh]);
+    useEffect(() => { if (!boot?.local)
+        return; const timer = setInterval(() => { if (pid)
+        refresh().catch(() => { }); if (!auth.connected)
+        refreshAuth(); }, 2500); return () => clearInterval(timer); }, [boot, pid, refresh, auth.connected, refreshAuth]);
+    useEffect(() => { if (data?.messages?.length) end.current?.scrollIntoView({ behavior: 'smooth' }); else end.current?.parentElement?.scrollTo({top:0}); }, [data?.messages?.at(-1)?.id, busy]);
+    useEffect(() => { const f = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (!modal)
+            setModal('search');
+    } }; window.addEventListener('keydown', f); return () => window.removeEventListener('keydown', f); }, [modal]);
+    async function createProject(e: React.FormEvent) { e.preventDefault(); setBusy(true); try {
+        const p = await api('projects', 'POST', { title, question, criteria });
+        await loadProjects();
+        setPid(p.id);
+        setModal('');
+        setTitle('');
+        setQuestion('');
+        setCriteria('');
+    }
+    catch (e) {
+        flash(e);
+    }
+    finally {
+        setBusy(false);
+    } }
+    async function ensureProject() { if (pid)
+        return pid; const p = await api('projects', 'POST', { title: tr('My research project') }); await loadProjects(); setPid(p.id); return p.id; }
+    async function search(q = query) { if (!q.trim())
+        return; setSearching(true); setError(''); try {
+        const id = await ensureProject();
+        const rows = await api('search', 'POST', { project: id, query: q, provider });
+        setResults(rows);
+        setQuery(q);
+        setModal('search');
+        await refresh(id);
+    }
+    catch (e) {
+        flash(e);
+    }
+    finally {
+        setSearching(false);
+    } }
+    async function addSource(s: Obj) { try {
+        const id = await ensureProject();
+        await api('projects/' + id + '/sources', 'POST', s);
+        await refresh(id);
+        setResults(r => r.map(x => x === s ? { ...x, added: true } : x));
+    }
+    catch (e) {
+        flash(e);
+    } }
+    async function screen(s: Obj, decision: string) { let reason = s.reason || ''; if (decision === 'exclude') {
+        const r = prompt(tr('Why is this record excluded at this stage?'), reason);
+        if (r === null)
+            return;
+        reason = r;
+    } try {
+        await api('sources/' + s.id, 'PATCH', { decision, stage: s.stage, reason });
+        await refresh();
+    }
+    catch (e) {
+        flash(e);
+    } }
+    async function send() { const text = input.trim(); if (!text || busy)
+        return; setError(''); if (!boot?.user) {
+        setModal('connect');
+        return;
+    } if (text.startsWith('/find ')) {
+        setRetrievalQuery(text.slice(6));
+        setModal('retrieve');
+        setInput('');
+        return;
+    } if (text.startsWith('/search ')) {
+        setInput('');
+        await search(text.slice(8));
+        return;
+    } if (text.startsWith('/note ')) {
+        const id = await ensureProject();
+        await api('projects/' + id + '/notes', 'POST', { content: text.slice(6) });
+        setInput('');
+        setPanel('notes');
+        setOpenPanel(true);
+        await refresh(id);
+        return;
+    } if (!boot.local || !auth.connected) {
+        setModal('connect');
+        return;
+    } if (!model) {
+        flash('Select an available model first.');
+        return;
+    } setBusy(true); try {
+        const id = await ensureProject();
+        await api('chat', 'POST', { project: id, text, model });
+        setInput('');
+        await refresh(id);
+    }
+    catch (e) {
+        flash(e);
+    }
+    finally {
+        setBusy(false);
+    } }
+    async function upload(list: FileList | null, resume?: Obj) { if (!list)
+        return; setError(''); let project = pid; try {
+        project = await ensureProject();
+        for (const file of Array.from(list)) {
+            if (file.size > boot!.limits.fileBytes)
+                throw Error('This workspace accepts files up to 2 GiB.');
+            setUploadName(file.name);
+            await uploadFile({ file, project, fileId: resume?.id, onProgress: (text = '') => setUploading(text) });
+            setPanel('files');
+            setOpenPanel(true);
+        }
+    }
+    catch (e) {
+        flash(e);
+    }
+    finally {
+        setUploading(''); setUploadName('');
+        if (project)
+            await refresh(project).catch(flash);
+        if (fileRef.current)
+            fileRef.current.value = '';
+        if (resumeRef.current)
+            resumeRef.current.value = '';
+    } }
+    async function importProject(file?: File) { if (!file)
+        return; try {
+        if (file.size > 2 * 1024 ** 2)
+            throw Error('Project metadata import is limited to 2 MiB.');
+        let b: Obj; try { b = JSON.parse(await file.text()); } catch { throw Error('The selected file is not valid project JSON.'); }
+        const id = await ensureProject();
+        await api('projects/' + id + '/import', 'POST', b);
+        await refresh(id);
+        setModal('');
+    }
+    catch (e) {
+        flash(e);
+    } }
+    async function createTask(e: React.FormEvent) { e.preventDefault(); try {
+        const id = await ensureProject();
+        const args = { ...(tool === 'web_meta_analysis' ? { effect: metaEffect, variance: metaVariance, ...(metaLabel ? { label: metaLabel } : {}), independent_effects_confirmed: metaIndependent } : tool.startsWith('web_') ? {} : JSON.parse(toolArgs)), ...(fileId ? { file_id: fileId } : {}) };
+        await api('tasks', 'POST', { project: id, kind: tool, args });
+        await refresh(id);
+        setModal('');
+        setPanel('activity');
+        setOpenPanel(true);
+    }
+    catch (e) {
+        flash(e);
+    } }
+    async function taskAction(t: Obj, action: string) { setTaskBusy(t.id); try {
+        await api('tasks/' + t.id + '/' + action, 'POST', {});
+        await refresh();
+    }
+    catch (e) {
+        flash(e);
+    }
+    finally {
+        setTaskBusy('');
+    } }
+    async function login() { try {
+        const a = await api('ai/login', 'POST', {});
+        setAuth(a);
+        setTimeout(refreshAuth, 1500);
+    }
+    catch (e) {
+        flash(e);
+    } }
+    const claims = data?.claims || [];
+    const p = data?.project, sources = data?.sources || [], files = data?.files || [], msgs = [...olderMessages, ...(data?.messages || [])].filter((m, i, a) => a.findIndex(x => x.id === m.id) === i), tasks = data?.tasks || [];
+    const working = tasks.some((t: Obj) => t.kind === 'chat' && ['running', 'queued'].includes(t.state));
+    return <div className="app-shell">
+  {mobileNav && <button className="nav-shade" aria-label={tr('Close navigation')} onClick={() => setMobileNav(false)}/>}
+  <aside ref={navRef} id="workspace-navigation" inert={!!modal} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav || undefined} aria-label={tr("Workspace navigation")} className={'sidebar ' + (mobileNav ? 'mobile-open' : '')}>
+   {mobileNav && <button className="icon nav-close" aria-label={tr("Close navigation")} onClick={() => setMobileNav(false)}><X size={20}/></button>}
+   <a className="brand" href={'/?lang=' + locale}><span className="brand-mark">E<span>•</span></span><span>{tr('Evidarium')}<small>{tr("RESEARCH WORKSPACE")}</small></span></a>
+   <button className="new-project" onClick={() => { setModal('new'); setMobileNav(false); }}><Plus size={17}/>{" " + tr("New research project") + " "}<span>↗</span></button>
+   <button className="nav-item" onClick={() => setModal('search')}><Search size={17}/>{" " + tr("Search literature") + " "}<kbd>{typeof navigator !== 'undefined' && /Mac/.test(navigator.platform) ? '⌘ K' : 'Ctrl K'}</kbd></button>
+   <button className="nav-item" onClick={() => { setRetrievalQuery(''); setModal('retrieve'); }}><History size={17}/>{" " + tr("Search this project")}</button>
+   <button className="nav-item" onClick={() => { setModal('tool'); }}><FlaskConical size={17}/>{" " + tr("Run an analysis")}</button>
+   <button className="nav-item" disabled={!boot?.user} onClick={async () => { try {
+        await ensureProject();
+        setModal('research');
+    }
+    catch (e) {
+        flash(e);
+    } }}><FileText size={17}/>{" " + tr("Writing & references")}</button>
+   <button className="nav-item" onClick={() => setModal('review')}><Layers size={17}/>{" " + tr("Systematic review")}</button>
+   <button className="nav-item" onClick={() => setModal('screening')}><ShieldCheck size={17}/>{" " + tr("Independent review")}</button>
+   <div className="nav-label">{tr("YOUR PROJECTS") + " "}<span>{formatNumber(projects.length)}</span></div>
+   <div className="project-list">{projects.map(x => <button key={x.id} className={'project-item ' + (pid === x.id ? 'active' : '')} onClick={() => { setPid(x.id); setMobileNav(false); }}><FolderOpen size={16}/><span dir="auto">{x.title}</span>{pid === x.id && <span className="tiny-dot"/>}</button>)}{!projects.length && <p className="sidebar-empty">{tr("Your research starts here.")}<br />{tr("Create a project to keep its evidence together.")}</p>}</div>
+   <div className="sidebar-bottom"><div className="workspace-card"><ShieldCheck size={20}/><div><strong>{tr("Your work. Your record.")}</strong><p>{tr(boot?.local ? 'Files are stored here. Relevant text is sent to your selected model.' : 'Your signed-in projects are private to you.')}</p></div></div>
+    <button className="nav-item" onClick={() => setModal('guide')}><BookOpen size={17}/>{" " + tr("How Evidarium works") + " "}<ArrowUpRight size={14}/></button>
+    <button className="account" onClick={() => setModal('connect')}><span className="avatar">{boot?.user?.displayName?.slice(0, 1).toUpperCase() || 'R'}</span><span dir="auto">{boot?.user?.displayName?.split('@')[0] || tr('Research workspace')}<small>{tr(boot?.local ? 'Local edition' : 'Hosted edition')} · v0.8</small></span><Settings2 size={16}/></button>
    </div>
   </aside>
-  <main className="main"><header className="topbar"><button className="icon mobile-menu" title="Open navigation" onClick={()=>setMobileNav(!mobileNav)}><Menu size={20}/></button><div className="breadcrumb"><span>Workspace</span><ChevronRight size={14}/><strong>{p?.title||'A new line of inquiry'}</strong></div><div className="top-actions"><span className="private"><ShieldCheck size={13}/>{boot?.local?'Local storage':'Private projects'}</span><button className="icon" title="Research panel" onClick={()=>setOpenPanel(!openPanel)}>{openPanel?<PanelRightClose size={19}/>:<PanelRightOpen size={19}/>}</button></div></header>
+  <main className="main" inert={mobileNav || !!modal}><header className="topbar"><button ref={navButtonRef} aria-controls="workspace-navigation" aria-expanded={mobileNav} className="icon mobile-menu" title={tr("Open navigation")} onClick={() => setMobileNav(!mobileNav)}><Menu size={20}/></button><div className="breadcrumb"><span>{tr("Workspace")}</span><ChevronRight size={14}/><strong dir="auto">{p?.title || tr('Research workspace')}</strong></div><div className="top-actions"><LanguageSwitch /><span className="private"><ShieldCheck size={13}/>{tr(boot?.local ? 'Local storage' : 'Private projects')}</span><button className="icon" title={tr("Research panel")} onClick={() => setOpenPanel(!openPanel)}>{openPanel ? <PanelRightClose size={19}/> : <PanelRightOpen size={19}/>}</button></div></header>
    <div className="workspace-body"><section className="conversation">
-    <div className="conversation-top"><button className="model-select" onClick={()=>setModal('connect')}><span className={'status-dot '+(auth.connected?'online':'')}/>{auth.connected?(models.find(m=>m.slug===model)?.display_name||model):'Connect your research engine'}<ChevronDown size={14}/></button><button className="text-button" onClick={()=>{setQuestion(p?.question||'');setCriteria(p?.criteria||'');setAllowSearch(p?.allow_search!==0);setModal('protocol')}}>Project brief <Settings2 size={14}/></button></div>
-    {error&&<div role="alert" className="error"><span>{error}</span><button className="icon" aria-label="Dismiss error" onClick={()=>setError('')}><X size={15}/></button></div>}
+    <div className="conversation-top"><button className="model-select" onClick={() => setModal('connect')}><span className={'status-dot ' + (auth.connected ? 'online' : '')}/>{auth.connected ? (models.find(m => m.slug === model)?.display_name || model) : tr('Research engine settings')}<ChevronDown size={14}/></button><button className="text-button" onClick={() => { setQuestion(p?.question || ''); setCriteria(p?.criteria || ''); setAllowSearch(p?.allow_search !== 0); setModal('protocol'); }}>{tr("Project brief") + " "}<Settings2 size={14}/></button></div>
+    {error && <div role="alert" className="error"><span>{localizeMessage(error, locale)}</span><button className="icon" aria-label={tr("Dismiss error")} onClick={() => setError('')}><X size={15}/></button></div>}
     <div className="messages">
-     {!msgs.length&&<div className="welcome"><div className="eyebrow"><span/> A CLEARER PATH FROM QUESTION TO EVIDENCE</div><h1>Good research starts<br/>with a better <em>question.</em></h1><p className="welcome-copy">Bring your question, your papers, and your curiosity.<br/>Keep the evidence behind every conclusion within reach.</p>
-      <div className="starter-grid"><button onClick={()=>setModal('search')}><Search size={21}/><strong>Find the evidence</strong><span>Search literature & open-access text</span><ArrowUpRight size={17}/></button><button onClick={()=>fileRef.current?.click()}><FileText size={21}/><strong>Work with your files</strong><span>Keep originals, trace every result</span><ArrowUpRight size={17}/></button><button onClick={()=>{setInput('Help me refine my research question and identify the methods and evidence I need.');composer.current?.focus()}}><Network size={21}/><strong>Develop an idea</strong><span>Turn a question into a research plan</span><ArrowUpRight size={17}/></button><button onClick={()=>setModal('tool')}><FlaskConical size={21}/><strong>Test a finding</strong><span>Inspect data, run reproducible analyses</span><ArrowUpRight size={17}/></button></div>
-      <div className="principle"><ShieldCheck size={15}/><span>Evidence linked. Decisions recorded. Uncertainty visible.</span></div>
+     {!msgs.length && <div className="welcome">
+      <div className="eyebrow">{tr("YOUR RESEARCH, IN FOCUS")}</div>
+      <h1>{p ? tr('Build on your evidence.') : tr('A clear place for serious research.')}</h1>
+      <p className="welcome-copy" dir="auto">{p?.question || tr('Bring your question, keep the original evidence, and leave a clear record of every decision.')}</p>
+      {p && <div className="project-facts" aria-label={tr('Saved project records')}><span><strong>{formatNumber(sources.length)}</strong>{tr('Sources')}</span><span><strong>{formatNumber(files.filter((f: Obj) => !['uploading', 'completing', 'deleting'].includes(f.status)).length)}</strong>{tr('Original files')}</span><span><strong>{formatNumber(tasks.filter((task: Obj) => task.state === 'awaiting_approval').length)}</strong>{tr('Awaiting approval')}</span></div>}
+      <div className="next-actions-title">{tr("Next steps")}</div>
+      <div className="starter-grid">
+       <button onClick={() => setModal('search')}><Search size={21}/><div><strong>{tr("Find the evidence")}</strong><span>{tr("Search literature and save relevant sources")}</span></div><ArrowUpRight size={17}/></button>
+       <button onClick={() => { if (boot?.user)
+            fileRef.current?.click();
+        else
+            setModal('connect'); }}><FileText size={21}/><div><strong>{tr("Bring your originals")}</strong><span>{tr("Upload papers, datasets and research files")}</span></div><ArrowUpRight size={17}/></button>
+       <button onClick={() => { setQuestion(p?.question || ''); setCriteria(p?.criteria || ''); setAllowSearch(p?.allow_search !== 0); setModal(boot?.user ? 'protocol' : 'new'); }}><Network size={21}/><div><strong>{tr("Define the question")}</strong><span>{tr("Set your question and eligibility criteria")}</span></div><ArrowUpRight size={17}/></button>
+      </div>
+      <div className="principle"><ShieldCheck size={17}/><span>{tr("Your evidence stays connected to your decisions.")}</span></div>
      </div>}
-     {(olderPage?.has_older??data?.message_page?.has_older)&&<button className="load-older secondary" disabled={loadingOlder} onClick={loadOlder}>{loadingOlder?'Loading…':'Load earlier messages'}</button>}
-     {msgs.map((m:Obj)=><article key={m.id} className={'message '+m.role}><div className="message-label">{m.role==='user'?<span className="message-avatar">You</span>:m.role==='tool'?<Terminal size={15}/>:<span className="mini-mark">E</span>}<strong>{m.role==='user'?'You':m.role==='tool'?'Research activity':'Evidarium'}</strong>{m.model&&<span>{m.model}</span>}<time>{new Date(m.created).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</time></div><RichText text={m.content} onCitation={(kind,id)=>{const list=kind==='S'?sources:files;if(!list.some((x:Obj)=>x.id===id)){flash('This citation does not match an available project record. It is not verified.');return}setPanel(kind==='S'?'evidence':'files');setOpenPanel(true);setTimeout(()=>document.getElementById('record-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}),100)}}/>{m.role==='assistant'&&<CitationReport raw={m.citation_audit}/>} {m.status!=='complete'&&<small className="output-status">{m.status==='partial'?'Partial output — the request did not complete.':m.status}</small>}</article>)}
-     {working&&<div className="thinking"><Loader2 size={16} className="spin"/> Research engine is working <button onClick={()=>{const t=tasks.find((t:Obj)=>t.kind==='chat'&&t.state==='running');if(t)taskAction(t,'cancel')}}><Square size={12}/> Stop</button></div>}
+     {(olderPage?.has_older ?? data?.message_page?.has_older) && <button className="load-older secondary" disabled={loadingOlder} onClick={loadOlder}>{tr(loadingOlder ? 'Loading…' : 'Load earlier messages')}</button>}
+     {msgs.map((m: Obj) => <article key={m.id} className={'message ' + m.role}><div className="message-label">{m.role === 'user' ? <span className="message-avatar">{tr("You")}</span> : m.role === 'tool' ? <Terminal size={15}/> : <span className="mini-mark">E</span>}<strong>{tr(m.role === 'user' ? 'You' : m.role === 'tool' ? 'Research activity' : 'Evidarium')}</strong>{m.model && <span>{m.model}</span>}<time>{formatDate(m.created, { hour: '2-digit', minute: '2-digit' })}</time></div><RichText text={m.role === 'tool' ? localizeMessage(m.content, locale) : m.content} onCitation={(kind, id) => { const list = kind === 'S' ? sources : files; if (!list.some((x: Obj) => x.id === id)) {
+        flash('This citation does not match an available project record. It is not verified.');
+        return;
+    } setPanel(kind === 'S' ? 'evidence' : 'files'); setOpenPanel(true); setTimeout(() => document.getElementById('record-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100); }}/>{m.role === 'assistant' && <CitationReport raw={m.citation_audit}/>} {m.status !== 'complete' && <small className="output-status">{m.status === 'partial' ? tr('Partial output — the request did not complete.') : label(m.status)}</small>}</article>)}
+     {working && <div className="thinking"><Loader2 size={16} className="spin"/>{" " + tr("Research engine is working") + " "}<button onClick={() => { const t = tasks.find((t: Obj) => t.kind === 'chat' && t.state === 'running'); if (t)
+        taskAction(t, 'cancel'); }}><Square size={12}/>{" " + tr("Stop")}</button></div>}
      <div ref={end}/>
     </div>
-    <div className="composer-area">{uploading&&<div className="upload-progress"><Loader2 size={14} className="spin"/>{uploading}</div>}
-     <div className="composer"><textarea ref={composer} value={input} onChange={e=>setInput(e.target.value)} placeholder="Ask a research question, or type /search to find papers…" aria-label="Research message" rows={2} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send().catch(flash)}}}/><div className="composer-footer"><div><button className="icon" title="Upload files" onClick={()=>fileRef.current?.click()} disabled={!boot?.user}><Paperclip size={18}/></button><button className="tool-chip" onClick={()=>setModal('search')}><Search size={14}/> Sources</button><button className="tool-chip" onClick={()=>setModal('tool')}><FlaskConical size={14}/> Analysis</button></div><div><span className="plan-indicator">{auth.connected?'Using ChatGPT plan':boot?.local?'Connect ChatGPT to chat':'AI runs in local edition'}</span><button className="send" aria-label="Send message" disabled={!input.trim()||busy||working} onClick={()=>send().catch(flash)}>{busy?<Loader2 size={18} className="spin"/>:<ArrowUp size={19}/>}</button></div></div></div>
-     <p className="composer-hint">Research requires judgment. Inspect sources and verify consequential results.</p>
+    <div className="composer-area">{uploading && <div className="upload-progress"><Loader2 size={14} className="spin"/><bdi>{uploadName}</bdi><span>· {localizeMessage(uploading, locale)}</span></div>}
+     <div className="composer"><textarea dir="auto" ref={composer} value={input} onChange={e => setInput(e.target.value)} placeholder={tr("Ask a research question, or type /search to find papers\u2026")} aria-label={tr("Research message")} rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send().catch(flash);
+    } }}/><div className="composer-footer"><div><button className="icon" title={tr("Upload files")} onClick={() => fileRef.current?.click()} disabled={!boot?.user}><Paperclip size={18}/></button><button className="tool-chip" onClick={() => setModal('search')}><Search size={14}/>{" " + tr("Sources")}</button><button className="tool-chip" onClick={() => setModal('tool')}><FlaskConical size={14}/>{" " + tr("Analysis")}</button></div><div><span className="plan-indicator">{tr(auth.connected ? 'Using ChatGPT plan' : boot?.local ? 'Connect ChatGPT to chat' : 'Hosted AI is not enabled')}</span><button className="send" aria-label={tr("Send message")} disabled={!input.trim() || busy || working} onClick={() => send().catch(flash)}>{busy ? <Loader2 size={18} className="spin"/> : <ArrowUp size={19}/>}</button></div></div></div>
+     <p className="composer-hint">{tr("Research requires judgment. Inspect sources and verify consequential results.")}</p>
     </div>
    </section>
-   {openPanel&&<aside className="research-panel"><div className="panel-heading"><div><span className="eyebrow small">PROJECT RECORD</span><h2>Your research, connected.</h2></div><button className="icon" title="Export project" onClick={()=>setModal('export')}><Download size={17}/></button></div><div className="panel-tabs">{[['evidence','Evidence'],['files','Files'],['claims','Claims'],['notes','Notes'],['activity','Activity']].map(([k,t])=><button className={panel===k?'selected':''} onClick={()=>setPanel(k)} key={k}>{t}</button>)}</div>
-    <div className="panel-content">{panel==='evidence'&&<><div className="panel-count"><span>{sources.length} saved records</span><button className="text-button" onClick={()=>setModal('search')}><Plus size={14}/> Add</button></div>{!sources.length?<div className="panel-empty"><div className="empty-orbit"><BookOpen size={25}/></div><h3>Build your evidence base</h3><p>Saved papers will appear here, with their sources and your screening decisions.</p><button className="secondary" onClick={()=>setModal('search')}>Find your first paper <ArrowUpRight size={14}/></button></div>:sources.map((s:Obj,i:number)=><div className="source-card" id={'record-'+s.id} key={s.id}><div className="source-meta"><span>[{i+1}] {s.origin}</span><span>{s.year||'Year unknown'}</span></div>{s.url||s.doi?<a href={s.url||'https://doi.org/'+s.doi} target="_blank" rel="noreferrer" className="source-title">{s.title}<ArrowUpRight size={13}/></a>:<strong className="source-title">{s.title}</strong>}<p>{s.authors||'Authors not provided'}</p>{s.abstract?<details><summary>Read source abstract</summary><p>{s.abstract}</p></details>:<small className="fine-print">Metadata only · abstract not supplied</small>}<FullTextImport source={s} available={files.some((f:Obj)=>f.source_id===s.id)} onDone={async id=>{await refresh();setExtraction(await api('files/'+id+'/text'));setModal('extraction')}}/><select aria-label="Screening stage" value={s.stage} onChange={async e=>{try{await api('sources/'+s.id,'PATCH',{decision:'unknown',stage:e.target.value,reason:''});await refresh()}catch(e){flash(e)}}}><option value="title_abstract">Title / abstract screening</option><option value="full_text">Full-text assessment</option><option value="analysis">Analysis eligibility</option></select><div className="screen-actions">{['include','exclude','unknown'].map(d=><button className={s.decision===d?'decision-'+d:''} key={d} onClick={()=>screen(s,d)}>{d==='unknown'?'Unreviewed':d==='include'?'Include':'Exclude'}</button>)}</div>{s.reason&&<small className="reason">{s.reason}</small>}</div>)}</>}
-    {panel==='claims'&&<><div className="panel-count"><span>{claims.length} evidence receipts</span><button className="text-button" onClick={()=>setModal('claim')}><Plus size={14}/> Record</button></div><p className="fine-print" style={{padding:'0 20px'}}>Every quotation is checked against stored text. You review whether it supports the claim.</p>{claims.map((c:Obj)=><article className="source-card" key={c.id}><div className="source-meta">{c.stance} · {c.status}</div><h3>{c.statement}</h3><blockquote>{c.quote}</blockquote><p>{c.location}</p><small>{String(c.verification).includes('external import')?'External receipt · passage not rechecked':'Exact text match · interpretation requires review'}</small><div className="decision-buttons">{['accepted','rejected','unreviewed'].map(status=><button key={status} className={c.status===status?'selected':''} onClick={async()=>{try{await api('claims/'+c.id,'PATCH',{status});await refresh()}catch(e){flash(e)}}}>{status}</button>)}</div></article>)}{!claims.length&&<div className="panel-empty"><Quote size={30}/><h3>Show what supports a claim</h3><p>Save a precise claim, an exact passage, and whether the passage supports, contradicts, or contextualizes it.</p><button className="secondary" onClick={()=>setModal('claim')}>Record evidence</button></div>}</>}
-    {panel==='files'&&<><div className="panel-count"><span>{files.length} originals</span><button className="text-button" onClick={()=>fileRef.current?.click()}><Plus size={14}/> Upload</button></div>{!files.length&&<div className="panel-empty"><FileText size={30}/><h3>Keep the originals</h3><p>Documents, datasets, images, or code. Storage and successful extraction are recorded separately.</p></div>}{files.map((f:Obj)=><div className="file-card" id={'record-'+f.id} key={f.id}><FileText size={21}/><div><strong>{f.name}</strong><small>{bytes(f.size)} · {f.status}</small><small>{f.status==='deleting'?'Deletion is incomplete. Retry to finish removing this original.':f.extracted?'Text available; inspect extraction report':'Not extracted or verified'}</small>{f.provenance&&<details><summary>Source & fingerprint</summary><pre>{JSON.stringify(JSON.parse(f.provenance),null,2)}</pre></details>}<div className="file-actions">{['uploading','completing'].includes(f.status)&&<button disabled={!!uploading} onClick={()=>{resumeFile.current=f;resumeRef.current?.click()}}>Resume with original file</button>}{f.extracted&&!['uploading','completing','deleting'].includes(f.status)&&<button onClick={async()=>{try{setExtraction(await api('files/'+f.id+'/text'));setModal('extraction')}catch(e){flash(e)}}}>Read text</button>}{!['uploading','completing','deleting'].includes(f.status)&&<a href={'/api/files/'+f.id}>Download</a>}{!['uploading','completing','deleting'].includes(f.status)&&<button onClick={()=>{setTool(boot?.local?'extract':/\.pdf$/i.test(f.name)?'web_extract_pdf':'web_extract_text');setFileId(f.id);setToolArgs('{}');setModal('tool')}}>Extract text</button>}<button disabled={!!deletingFile} onClick={async()=>{if(deletingFile||f.status!=='deleting'&&!confirm('Delete this original file? This cannot be undone.'))return;setDeletingFile(f.id);try{await api('files/'+f.id,'DELETE');if(fileId===f.id)setFileId('');if(claimEvidence==='file:'+f.id)setClaimEvidence('')}catch(e){flash(e)}finally{await refresh().catch(flash);setDeletingFile('')}}} aria-label={(f.status==='deleting'?'Retry deletion of ':'Delete ')+f.name}><Trash2 size={12}/>{deletingFile===f.id?'Deleting…':f.status==='deleting'?'Retry deletion':null}</button></div></div></div>)}</>}
-    {panel==='notes'&&<><p className="panel-description">Save durable research decisions with <code>/note your decision</code> in the chat.</p>{!(data?.notes||[]).length&&<div className="panel-empty"><Quote size={28}/><h3>A place for your thinking</h3><p>Keep questions, assumptions, and decisions separate from AI-generated answers.</p></div>}{(data?.notes||[]).map((n:Obj)=><div className="note-card" key={n.id}><small>{new Date(n.created).toLocaleDateString()}</small><RichText text={n.content}/></div>)}</>}
-    {panel==='activity'&&<>{tasks.filter((t:Obj)=>t.kind!=='chat').map((t:Obj)=><div className="task-card" key={t.id}><div className="source-meta"><strong>{t.kind}</strong><span>{t.state.replaceAll('_',' ')}</span></div><details><summary>Inputs & parameters</summary><pre>{JSON.stringify(JSON.parse(t.args),null,2)}</pre></details>{t.state==='awaiting_approval'&&<><p>{t.kind.startsWith('web_')?(boot?.local?'This native analysis runs locally.':'This analysis runs on the website. No installation is needed.'):'This task runs on your computer.'} Review the input and parameters before approving.</p><button className="primary" onClick={()=>taskAction(t,'approve')} disabled={!!taskBusy}><Play size={13}/> Approve & run</button></>}{['running','awaiting_approval'].includes(t.state)&&<button className="secondary" onClick={()=>taskAction(t,'cancel')}>Cancel task</button>}{t.error&&<p className="inline-error">{t.error}</p>}{t.result&&<><button className="secondary" onClick={()=>{setOpenRecord({...t,record_type:'analysis'});setModal('record')}}>Inspect result & export</button><details><summary>Raw result & provenance</summary><pre>{JSON.stringify(JSON.parse(t.result),null,2)}</pre></details></>}</div>)}{!(data?.audit||[]).length&&<div className="panel-empty"><History size={28}/><h3>A record you can follow</h3><p>Searches, screening decisions, protocol changes, and executions are recorded here.</p></div>}{(data?.audit||[]).map((a:Obj)=><div className="audit-item" key={a.id}><span className="audit-dot"/><div><strong>{a.action.replaceAll('.',' · ')}</strong><small>{new Date(a.created).toLocaleString()}</small><details><summary>Details</summary><pre>{JSON.stringify(JSON.parse(a.detail),null,2)}</pre></details></div></div>)}</>}
-    </div><div className="panel-footer"><Link2 size={13}/> A source is a starting point, not a verdict.</div>
+   {openPanel && <aside className="research-panel"><div className="panel-heading"><div><span className="eyebrow small">{tr("PROJECT RECORD")}</span><h2>{tr("Evidence & activity")}</h2></div><button className="icon" title={tr("Export project")} onClick={() => setModal('export')}><Download size={17}/></button><button className="icon panel-close" aria-label={tr("Close research panel")} onClick={() => setOpenPanel(false)}><X size={19}/></button></div><div className="panel-tabs">{[['evidence', 'Evidence'], ['files', 'Files'], ['claims', 'Claims'], ['notes', 'Notes'], ['activity', 'Activity']].map(([k, t]) => <button className={panel === k ? 'selected' : ''} onClick={() => setPanel(k)} key={k}>{tr(t)}</button>)}</div>
+    <div className="panel-content">{panel === 'evidence' && <><div className="panel-count"><span>{tr('{count} saved records', { count: formatNumber(sources.length) })}</span><button className="text-button" onClick={() => setModal('search')}><Plus size={14}/>{" " + tr("Add")}</button></div>{!sources.length ? <div className="panel-empty"><div className="empty-orbit"><BookOpen size={25}/></div><h3>{tr("Build your evidence base")}</h3><p>{tr("Saved papers will appear here, with their sources and your screening decisions.")}</p><button className="secondary" onClick={() => setModal('search')}>{tr("Find your first paper") + " "}<ArrowUpRight size={14}/></button></div> : sources.map((s: Obj, i: number) => <div className="source-card" id={'record-' + s.id} key={s.id}><div className="source-meta"><span>[{i + 1}] {s.origin}</span><span>{s.year || tr('Year unknown')}</span></div>{s.url || s.doi ? <a href={s.url || 'https://doi.org/' + s.doi} target="_blank" rel="noreferrer" className="source-title" dir="auto">{s.title}<ArrowUpRight size={13}/></a> : <strong className="source-title" dir="auto">{s.title}</strong>}<p dir="auto">{s.authors || tr('Authors not provided')}</p>{s.abstract ? <details><summary>{tr("Read source abstract")}</summary><p dir="auto">{s.abstract}</p></details> : <small className="fine-print">{tr("Metadata only \u00B7 abstract not supplied")}</small>}<FullTextImport source={s} available={files.some((f: Obj) => f.source_id === s.id)} onDone={async (id) => { await refresh(); setExtraction(await api('files/' + id + '/text')); setModal('extraction'); }}/><select aria-label={tr("Screening stage")} value={s.stage} onChange={async (e) => { try {
+            await api('sources/' + s.id, 'PATCH', { decision: 'unknown', stage: e.target.value, reason: '' });
+            await refresh();
+        }
+        catch (e) {
+            flash(e);
+        } }}><option value="title_abstract">{tr("Title / abstract screening")}</option><option value="full_text">{tr("Full-text assessment")}</option><option value="analysis">{tr("Analysis eligibility")}</option></select><div className="screen-actions">{['include', 'exclude', 'unknown'].map(d => <button className={s.decision === d ? 'decision-' + d : ''} key={d} onClick={() => screen(s, d)}>{label(d)}</button>)}</div>{s.reason && <small className="reason" dir="auto">{s.reason}</small>}</div>)}</>}
+    {panel === 'claims' && <><div className="panel-count"><span>{formatNumber(claims.length)}{" " + tr("evidence receipts")}</span><button className="text-button" onClick={() => setModal('claim')}><Plus size={14}/>{" " + tr("Record")}</button></div><p className="fine-print" style={{ padding: '0 20px' }}>{tr("Every quotation is checked against stored text. You review whether it supports the claim.")}</p>{claims.map((c: Obj) => <article className="source-card" key={c.id}><div className="source-meta">{label(c.stance)} · {label(c.status)}</div><h3 dir="auto">{c.statement}</h3><blockquote dir="auto">{c.quote}</blockquote><p>{localizeMessage(c.location, locale)}</p><small>{tr(String(c.verification).includes('external import') ? 'External receipt · passage not rechecked' : 'Exact text match · interpretation requires review')}</small><div className="decision-buttons">{['accepted', 'rejected', 'unreviewed'].map(status => <button key={status} className={c.status === status ? 'selected' : ''} onClick={async () => { try {
+            await api('claims/' + c.id, 'PATCH', { status });
+            await refresh();
+        }
+        catch (e) {
+            flash(e);
+        } }}>{label(status)}</button>)}</div></article>)}{!claims.length && <div className="panel-empty"><Quote size={30}/><h3>{tr("Show what supports a claim")}</h3><p>{tr("Save a precise claim, an exact passage, and whether the passage supports, contradicts, or contextualizes it.")}</p><button className="secondary" onClick={() => setModal('claim')}>{tr("Record evidence")}</button></div>}</>}
+    {panel === 'files' && <><div className="panel-count"><span>{formatNumber(files.length)}{" " + tr("originals")}</span><button className="text-button" onClick={() => fileRef.current?.click()}><Plus size={14}/>{" " + tr("Upload")}</button></div>{!files.length && <div className="panel-empty"><FileText size={30}/><h3>{tr("Keep the originals")}</h3><p>{tr("Documents, datasets, images, or code. Storage and successful extraction are recorded separately.")}</p></div>}{files.map((f: Obj) => <div className="file-card" id={'record-' + f.id} key={f.id}><FileText size={21}/><div><strong dir="auto">{f.name}</strong><small>{formatBytes(f.size)} · {label(f.status)}</small><small>{tr(f.status === 'deleting' ? 'Deletion is incomplete. Retry to finish removing this original.' : f.extracted ? 'Text available; inspect extraction report' : 'Not extracted or verified')}</small>{f.provenance && <details><summary>{tr("Source & fingerprint")}</summary><pre>{JSON.stringify(JSON.parse(f.provenance), null, 2)}</pre></details>}<div className="file-actions">{['uploading', 'completing'].includes(f.status) && <button disabled={!!uploading} onClick={() => { resumeFile.current = f; resumeRef.current?.click(); }}>{tr("Resume with original file")}</button>}{f.extracted && !['uploading', 'completing', 'deleting'].includes(f.status) && <button onClick={async () => { try {
+            setExtraction(await api('files/' + f.id + '/text'));
+            setModal('extraction');
+        }
+        catch (e) {
+            flash(e);
+        } }}>{tr("Read text")}</button>}{!['uploading', 'completing', 'deleting'].includes(f.status) && <a href={'/api/files/' + f.id}>{tr("Download")}</a>}{!['uploading', 'completing', 'deleting'].includes(f.status) && <button onClick={() => { setTool(boot?.local ? 'extract' : /\.pdf$/i.test(f.name) ? 'web_extract_pdf' : 'web_extract_text'); setFileId(f.id); setToolArgs('{}'); setModal('tool'); }}>{tr("Extract text")}</button>}<button disabled={!!deletingFile} onClick={async () => { if (deletingFile || f.status !== 'deleting' && !confirm(tr('Delete this original file? This cannot be undone.')))
+            return; setDeletingFile(f.id); try {
+            await api('files/' + f.id, 'DELETE');
+            if (fileId === f.id)
+                setFileId('');
+            if (claimEvidence === 'file:' + f.id)
+                setClaimEvidence('');
+        }
+        catch (e) {
+            flash(e);
+        }
+        finally {
+            await refresh().catch(flash);
+            setDeletingFile('');
+        } }} aria-label={tr(f.status === 'deleting' ? 'Retry deletion of {name}' : 'Delete {name}', {name: f.name})}><Trash2 size={12}/>{deletingFile === f.id ? tr('Deleting…') : f.status === 'deleting' ? tr('Retry deletion') : null}</button></div></div></div>)}</>}
+    {panel === 'notes' && <><p className="panel-description">{tr("Save durable research decisions with") + " "}<code>{tr("/note your decision")}</code>{" " + tr("in the chat.")}</p>{!(data?.notes || []).length && <div className="panel-empty"><Quote size={28}/><h3>{tr("A place for your thinking")}</h3><p>{tr("Keep questions, assumptions, and decisions separate from AI-generated answers.")}</p></div>}{(data?.notes || []).map((n: Obj) => <div className="note-card" key={n.id}><small>{formatDate(n.created,{dateStyle:'medium'})}</small><RichText text={n.content}/></div>)}</>}
+    {panel === 'activity' && <>{tasks.filter((t: Obj) => t.kind !== 'chat').map((t: Obj) => <div className="task-card" key={t.id}><div className="source-meta"><strong>{label(t.kind)}</strong><span>{label(t.state)}</span></div><details><summary>{tr("Inputs & parameters")}</summary><pre>{JSON.stringify(JSON.parse(t.args), null, 2)}</pre></details>{t.state === 'awaiting_approval' && <><p>{tr(t.kind.startsWith('web_') ? (boot?.local ? 'This native analysis runs locally.' : 'This analysis runs on the website. No installation is needed.') : 'This task runs on your computer.')}{" " + tr("Review the input and parameters before approving.")}</p><button className="primary" onClick={() => taskAction(t, 'approve')} disabled={!!taskBusy}><Play size={13}/>{" " + tr("Approve & run")}</button></>}{['running', 'awaiting_approval'].includes(t.state) && <button className="secondary" onClick={() => taskAction(t, 'cancel')}>{tr("Cancel task")}</button>}{t.error && <p className="inline-error">{localizeMessage(t.error, locale)}</p>}{t.result && <><button className="secondary" onClick={() => { setOpenRecord({ ...t, record_type: 'analysis' }); setModal('record'); }}>{tr("Inspect result & export")}</button><details><summary>{tr("Raw result & provenance")}</summary><pre>{JSON.stringify(JSON.parse(t.result), null, 2)}</pre></details></>}</div>)}{!(data?.audit || []).length && <div className="panel-empty"><History size={28}/><h3>{tr("A record you can follow")}</h3><p>{tr("Searches, screening decisions, protocol changes, and executions are recorded here.")}</p></div>}{(data?.audit || []).map((a: Obj) => <div className="audit-item" key={a.id}><span className="audit-dot"/><div><strong>{label(a.action)}</strong><small>{formatDate(a.created)}</small><details><summary>{tr("Details")}</summary><pre>{JSON.stringify(JSON.parse(a.detail), null, 2)}</pre></details></div></div>)}</>}
+    </div><div className="panel-footer"><Link2 size={13}/>{" " + tr("A source is a starting point, not a verdict.")}</div>
    </aside>}
    </div>
   </main>
-  <input ref={resumeRef} type="file" hidden onChange={e=>upload(e.target.files,resumeFile.current||undefined)}/><input ref={fileRef} type="file" multiple hidden onChange={e=>upload(e.target.files)}/><input ref={importRef} type="file" accept=".json" hidden onChange={e=>importProject(e.target.files?.[0])}/>
-  {modal&&<div className="modal-backdrop" onClick={closeModal}><section ref={modalRef} className={'modal '+(['search','retrieve','record','extraction','research','review','screening'].includes(modal)?'wide':'')} role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e=>e.stopPropagation()}><div className="modal-top"><div><span className="eyebrow small">EVIDARIUM</span><h2 id="modal-title">{{screening:'Independent review · المراجعة المستقلة',review:'Systematic review · المراجعة المنهجية',research:'Write, cite, and report your research',retrieve:'Find your evidence and decisions',record:'Inspect the project record',new:'Start a line of inquiry',search:'Find the evidence',connect:'Your research engine',protocol:'Define your project',tool:'Run a real analysis',export:'Take your research with you',guide:'Research you can trace',claim:'Record a claim and its evidence',extraction:'Inspect extracted text'}[modal]}</h2></div><button className="icon" aria-label="Close dialog" onClick={closeModal}><X size={21}/></button></div>
-   {modal==='review'&&<ReviewDesk key={pid} project={pid} sources={sources} files={files} onDirty={setDraftDirty} onStart={()=>setModal('new')}/>}
-   {modal==='screening'&&<ScreeningDesk project={pid} sources={sources} boot={boot} onDirty={setDraftDirty}/>}
-   {modal==='research'&&<ResearchDesk project={pid} sources={sources} onChanged={()=>refresh()} onDirty={setDraftDirty}/>}
-   {modal==='new'&&(!boot?.user?<div className="modal-body"><p>Sign in to create a private project.</p><a className="primary" target="_top" href="/signin-with-chatgpt?return_to=/">Continue with ChatGPT</a></div>:<form onSubmit={createProject} className="modal-body"><label>Project name<input value={title} onChange={e=>setTitle(e.target.value)} required maxLength={160} placeholder="e.g. Emotion regulation and affect labeling"/></label><label>Research question<textarea value={question} onChange={e=>setQuestion(e.target.value)} rows={3} placeholder="What do you want to find out?"/></label><button className="primary" disabled={busy}>Create project <ArrowUpRight size={15}/></button></form>)}
-   {modal==='retrieve'&&<div className="modal-body"><ProjectSearch project={pid} initialQuery={retrievalQuery} onOpen={async r=>{if(r.type==='file'){setExtraction(await api('files/'+r.id+'/text'));setModal('extraction')}else{setOpenRecord({...await api('projects/'+pid+'/records/'+r.type+'/'+r.id),record_type:r.type});setModal('record')}}}/></div>}
-   {modal==='record'&&openRecord&&<div className="modal-body"><div className="source-meta">{openRecord.record_type}</div><h3>{openRecord.title||openRecord.statement||openRecord.kind||openRecord.role}</h3>{openRecord.record_type==='analysis'&&openRecord.result?<AnalysisResult raw={openRecord.result}/>:<RichText text={openRecord.content||openRecord.abstract||openRecord.quote||'No text supplied.'}/>}{openRecord.citation_audit&&<CitationReport raw={openRecord.citation_audit}/>}<button className="text-button" onClick={()=>setModal('retrieve')}>Back to project search</button></div>}
-   {modal==='search'&&<div className="modal-body"><p>Explore real bibliographic records. These searches return up to 20 records and do not establish a comprehensive systematic search.</p><form className="search-form" onSubmit={e=>{e.preventDefault();search()}}><select aria-label="Literature database" value={provider} onChange={e=>setProvider(e.target.value)}><option value="europepmc">Europe PMC · abstracts & open access</option><option value="pubmed">PubMed</option><option value="crossref">Crossref</option></select><input value={query} onChange={e=>setQuery(e.target.value)} required minLength={3} placeholder="Question, keywords, or DOI"/><button className="primary" disabled={searching||!boot?.user}>{searching?<Loader2 size={17} className="spin"/>:<Search size={17}/>}</button></form>{!boot?.user&&<a href="/signin-with-chatgpt?return_to=/" target="_top">Sign in to search and save your results.</a>}<div className="search-results">{results.map((s,i)=><article key={i}><div className="source-meta">{s.origin} · {s.year||'Year unknown'}{s.access==='open_access'?' · Open access':''}</div><h3><a href={s.url} target="_blank" rel="noreferrer">{s.title}</a></h3><p>{s.authors}</p>{s.abstract&&<details><summary>Abstract supplied by source</summary><p>{s.abstract}</p></details>}<button className="secondary" disabled={s.added} onClick={()=>addSource(s)}>{s.added?<Check size={13}/>:<Plus size={13}/>} {s.added?'Saved':'Add to evidence'}</button></article>)}</div></div>}
-   {modal==='connect'&&<div className="modal-body"><div className="connection-state"><span className={'status-dot '+(auth.connected?'online':'')}/><strong>{auth.connected?'Connected to ChatGPT':boot?.local?'Ready for ChatGPT sign-in':'Hosted research workspace'}</strong></div>{!boot?.local?<><p>Use the standalone, open-source local edition for the subscription AI connection and additional scientific engines. It opens this workspace interface on your computer. ChatGPT credentials never pass through the hosted website.</p><a className="primary" href="/downloads/evidarium-local.zip"><Download size={16}/> Download local edition</a><p className="fine-print">Requires Node.js 24.19+ and Python 3.11+. Extract the ZIP, then run start-windows.ps1 or start.sh. Installation downloads the listed Python dependencies.</p><p>The hosted edition supports private projects, files, literature search, screening, native CSV analysis, meta-analysis, text extraction, notes, and exports. Hosted ChatGPT subscription inference is not enabled.</p>{!boot?.user&&<a className="secondary" href="/signin-with-chatgpt?return_to=/" target="_top">Continue with ChatGPT to save projects</a>}</>:<><p>Authorize this local open-source application to use your eligible ChatGPT allowance. Your OpenAI credentials are stored in your operating system credential store.</p>{!auth.connected?<button className="primary" onClick={login}>Continue with ChatGPT <ArrowUpRight size={15}/></button>:<><label>Model<select value={model} onChange={e=>setModel(e.target.value)}>{models.map(m=><option key={m.slug} value={m.slug}>{m.display_name||m.slug}</option>)}</select></label><p className="fine-print">The exact selected model is used. No automatic fallback. Account availability and plan limits still apply.</p><LiveVerification model={model} onOpen={async id=>{await loadProjects();setPid(id);setModal('')}}/><a target="_blank" rel="noreferrer" href="https://chatgpt.com/#settings/Usage">Manage ChatGPT usage ↗</a><button className="text-button" onClick={async()=>{try{const result=await api('ai/logout','POST',{});await refreshAuth();if(result.warning)flash(result.warning)}catch(e){flash(e)}}}>Disconnect ChatGPT</button></>}{auth.pending&&<p>Complete authorization in your system browser, then return here.</p>}{auth.account&&<p className="fine-print">Connected account: {auth.account}</p>}{auth.error&&<p className="inline-error">{auth.error}</p>}</>}<div className="divider"/><strong>Clear boundaries</strong><p>Model access, website sign-in, and local execution are separate permissions. Large files are stored separately from model context; unsupported extraction is reported explicitly.</p></div>}
-   {modal==='protocol'&&<form className="modal-body" onSubmit={async e=>{e.preventDefault();try{const id=await ensureProject();await api('projects/'+id,'PATCH',{question,criteria,allow_search:allowSearch});await refresh(id);setModal('')}catch(e){flash(e)}}}><label>Research question<textarea rows={3} value={question} onChange={e=>setQuestion(e.target.value)}/></label><label>Eligibility criteria & planned methods<textarea rows={6} value={criteria} onChange={e=>setCriteria(e.target.value)} placeholder="Population, design, outcomes, exclusions, analysis plan…"/></label><label className="check-label"><input type="checkbox" checked={allowSearch} onChange={e=>setAllowSearch(e.target.checked)}/> Allow searches to send query text to public literature databases</label><p className="fine-print">Turning this off blocks manual and AI-initiated literature searches and remote article imports. Chat still sends selected project context to OpenAI when you use the connected model.</p><p className="fine-print">Changes are timestamped. Saving a plan does not constitute an external preregistration.</p><button className="primary">Save project brief</button></form>}
-   {modal==='tool'&&<form className="modal-body" onSubmit={createTask}>{!boot?.user?<><p>Sign in to analyze files in your private project.</p><a className="primary" target="_top" href="/signin-with-chatgpt?return_to=/">Continue with ChatGPT</a></>:<><label>Analysis<select value={tool} onChange={e=>{setTool(e.target.value);setToolArgs('{}');setMetaIndependent(false)}}>{[['web_describe_csv','CSV statistics · no installation'],['web_meta_analysis','Meta-analysis · native REML / Knapp–Hartung'],['web_extract_text','Read UTF-8 text · no installation'],['web_extract_pdf','Extract PDF text · no installation'],...(boot.local?[['describe_csv','CSV statistics · Python'],['extract','Document extraction · Python / Docling'],['meta_analysis','Meta-analysis · metafor (R)'],['screen_rank','Screening priorities · ASReview'],['symbolic_regression','Equation discovery · PySR'],['mechanism_graph','Mechanistic claims · INDRA'],['paperqa','Document questions · PaperQA2 / local model'],['openscholar','Literature synthesis · OpenScholar / GPU'],['biomni','Biomedical research · Biomni / isolated worker'],['python','Custom Python · isolated Docker']]:[])].map(([k,n])=><option value={k} key={k}>{n}</option>)}</select></label><label>Input file<select value={fileId} onChange={e=>setFileId(e.target.value)} required={tool.startsWith('web_')}><option value="">Choose an input</option>{files.filter((f:Obj)=>!['uploading','completing','deleting'].includes(f.status)).map((f:Obj)=><option value={f.id} key={f.id}>{f.name} · {bytes(f.size)}</option>)}</select></label>{tool==='web_meta_analysis'&&<><p>Upload a CSV with effect estimates and their sampling variances. Use the same effect scale and direction throughout; log ratios remain on the log scale.</p><label>Effect column<input value={metaEffect} onChange={e=>setMetaEffect(e.target.value)} required maxLength={200}/></label><label>Sampling variance column<input value={metaVariance} onChange={e=>setMetaVariance(e.target.value)} required maxLength={200}/></label><label>Study label column (optional)<input value={metaLabel} onChange={e=>setMetaLabel(e.target.value)} maxLength={200}/></label><label className="check-label"><input type="checkbox" checked={metaIndependent} onChange={e=>setMetaIndependent(e.target.checked)} required/> I have checked that these estimates are independent and comparable.</label><p className="fine-print">3–200 studies. Native JavaScript REML with an unmodified Knapp–Hartung interval, numerically checked against metafor. This is not the R package and does not support dependent effects or moderators.</p></>}{tool==='web_extract_pdf'&&<p>Extracts text from PDF pages, up to 5 MiB, 50 pages and 200,000 characters. Scans need OCR; figures, tables, equations and reading order require review. Partial coverage is recorded.</p>}{tool==='web_describe_csv'&&<p>Calculates row counts, missing and nonnumeric counts, means, sample standard deviations, medians, minima and maxima. No model or package installation is required.</p>}{tool==='web_extract_text'&&<p>Reads UTF-8 TXT, Markdown, CSV, TSV, JSON, XML/JATS, RIS, BibTeX and FASTA text, retaining markup. This reader does not parse PDFs, Word files or scanned images.</p>}{tool.startsWith('web_')?<p className="fine-print">Runs {boot.local?'locally':'on this website'} after approval. Input limit: {tool==='web_extract_pdf'?'5 MiB':'1 MiB'}. CSV: 50,000 rows, 100 columns, 250,000 cells. Text extraction: 200,000 characters. Original files stay stored if analysis is unsupported.</p>:<><label>Parameters (JSON)<textarea className="mono" rows={5} value={toolArgs} onChange={e=>setToolArgs(e.target.value)}/></label><p className="fine-print">This optional engine needs its documented local packages and resources.</p></>}<WebsiteCheck/><a className="text-button" href="/examples/bcg-effects.csv" download>Download published BCG example CSV</a><a href="/guide.html" target="_blank">Methods, parameters & installation ↗</a><button className="primary">Prepare task for approval <ChevronRight size={14}/></button></>}</form>}
-   {modal==='export'&&<div className="modal-body"><button className="secondary" onClick={()=>setModal('research')}>Writing, reference exports & screening ledger</button><p>Export project records, criteria, notes, conversations and current drafts. This is interchange, not a complete backup: original files, full revision histories and the independent-review ledger must be retained separately.</p><a className="primary" href={pid?'/api/projects/'+pid+'/export':'#'} download>Download project JSON <Download size={15}/></a><a className="secondary" href={pid?'/api/projects/'+pid+'/export?format=csv':'#'} download>Download screening CSV</a><button className="secondary" onClick={()=>setModal('screening')}>Independent review archive</button><button className="secondary" onClick={()=>importRef.current?.click()}>Import an Evidarium project</button><p className="fine-print">Imported results keep an external-origin audit entry. Review third-party content rights before redistributing.</p></div>}
-   {modal==='extraction'&&<div className="modal-body"><p className="fine-print">{extraction?.characters} characters · {extraction?.complete?'Extraction finished':'Partial extraction or method limitations'}</p>{[...(extraction?.warnings||[]),...(extraction?.limitations||[])].map((w:string,i:number)=><p key={i} className="inline-error">{w}</p>)}{extraction?.segments?.map((x:Obj,i:number)=><section key={i}><h3>{x.location}</h3><pre className="extracted-text">{x.text}</pre></section>)}</div>}
-   {modal==='claim'&&<form className="modal-body" onSubmit={async e=>{e.preventDefault();try{const id=await ensureProject(),[type,evidenceId]=claimEvidence.split(':');await api('projects/'+id+'/claims','POST',{statement:claimText,quote:claimQuote,stance:claimStance,location:claimLocation,...(type==='source'?{source_id:evidenceId}:{file_id:evidenceId})});await refresh(id);setModal('');setPanel('claims');setOpenPanel(true);setClaimText('');setClaimQuote('')}catch(e){flash(e)}}}><label>Scientific claim<textarea rows={3} required value={claimText} onChange={e=>setClaimText(e.target.value)}/></label><label>Evidence<select required value={claimEvidence} onChange={e=>setClaimEvidence(e.target.value)}><option value="">Choose saved evidence</option>{sources.filter((x:Obj)=>x.abstract).map((x:Obj)=><option key={x.id} value={'source:'+x.id}>Abstract: {x.title}</option>)}{files.filter((x:Obj)=>x.extracted&&!['uploading','completing','deleting'].includes(x.status)).map((x:Obj)=><option key={x.id} value={'file:'+x.id}>Extracted file: {x.name}</option>)}</select></label>{claimEvidence.startsWith('file:')&&<label>Exact location<input value={claimLocation} onChange={e=>setClaimLocation(e.target.value)} placeholder="page 1, paragraph 2, or text" required/></label>}<label>Relationship<select value={claimStance} onChange={e=>setClaimStance(e.target.value)}><option value="supports">Supports</option><option value="contradicts">Contradicts</option><option value="context">Provides context</option></select></label><label>Exact quotation<textarea rows={5} required minLength={12} value={claimQuote} onChange={e=>setClaimQuote(e.target.value)}/></label><p className="fine-print">The server must find this exact text in the selected abstract or extracted location. A text match confirms the passage exists; it does not establish the claim is true. Every new receipt starts unreviewed.</p><button className="primary">Check passage & save receipt</button></form>}
-   {modal==='guide'&&<div className="modal-body"><p>Evidarium keeps your research question, evidence, files, decisions, analysis runs, and writing in one project record.</p><ul className="guide-list"><li><strong>Find and assess.</strong> Search actual literature databases and record stage-specific inclusion decisions.</li><li><strong>Run and inspect.</strong> Run native CSV and meta-analysis on the website. The local edition adds the ChatGPT connection flow and optional engines.</li><li><strong>Preserve and export.</strong> Retain originals, explicit parameters, execution records, and source links.</li></ul><p>Current release: an early working research workspace. It is not a validated autonomous scientist. The guide distinguishes implemented functions, optional engines, and unverified integrations.</p><a className="primary" href="/guide.html" target="_blank">Read the technical guide <ArrowUpRight size={15}/></a></div>}
+  <input ref={resumeRef} type="file" hidden onChange={e => upload(e.target.files, resumeFile.current || undefined)}/><input ref={fileRef} type="file" multiple hidden onChange={e => upload(e.target.files)}/><input ref={importRef} type="file" accept=".json" hidden onChange={e => importProject(e.target.files?.[0])}/>
+  {modal && <div className="modal-backdrop" onClick={closeModal}><section ref={modalRef} className={'modal ' + (['search', 'retrieve', 'record', 'extraction', 'research', 'review', 'screening'].includes(modal) ? 'wide' : '') + (['research', 'review', 'screening'].includes(modal) ? ' desk-sheet' : '')} role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e => e.stopPropagation()}><div className="modal-top"><div><span className="eyebrow small">{tr("EVIDARIUM")}</span><h2 id="modal-title">{tr({ screening: 'Independent review', review: 'Systematic review', research: 'Write, cite, and report your research', retrieve: 'Find your evidence and decisions', record: 'Inspect the project record', new: 'Start a line of inquiry', search: 'Find the evidence', connect: 'Your research engine', protocol: 'Define your project', tool: 'Run a real analysis', export: 'Take your research with you', guide: 'Research you can trace', claim: 'Record a claim and its evidence', extraction: 'Inspect extracted text' }[modal] || 'Research workspace')}</h2></div><div className="modal-header-actions"><LanguageSwitch /><button className="icon" aria-label={tr("Close dialog")} onClick={closeModal}><X size={21}/></button></div></div>
+   {modal === 'review' && <ReviewDesk key={pid} project={pid} sources={sources} files={files} onDirty={setDraftDirty} onStart={() => setModal('new')}/>}
+   {modal === 'screening' && <ScreeningDesk project={pid} sources={sources} boot={boot} onDirty={setDraftDirty}/>}
+   {modal === 'research' && <ResearchDesk project={pid} sources={sources} onChanged={() => refresh()} onDirty={setDraftDirty}/>}
+   {modal === 'new' && (!boot?.user ? <div className="modal-body"><p>{tr("Sign in to create a private project.")}</p><a className="primary" target="_top" href={signinHref}>{tr("Continue with ChatGPT")}</a></div> : <form onSubmit={createProject} className="modal-body"><label>{tr("Project name")}<input dir="auto" value={title} onChange={e => setTitle(e.target.value)} required maxLength={160} placeholder={tr("e.g. Emotion regulation and affect labeling")}/></label><label>{tr("Research question")}<textarea dir="auto" value={question} onChange={e => setQuestion(e.target.value)} rows={3} placeholder={tr("What do you want to find out?")}/></label><button className="primary" disabled={busy}>{tr("Create project") + " "}<ArrowUpRight size={15}/></button></form>)}
+   {modal === 'retrieve' && <div className="modal-body"><ProjectSearch project={pid} initialQuery={retrievalQuery} onOpen={async (r) => { if (r.type === 'file') {
+            setExtraction(await api('files/' + r.id + '/text'));
+            setModal('extraction');
+        }
+        else {
+            setOpenRecord({ ...await api('projects/' + pid + '/records/' + r.type + '/' + r.id), record_type: r.type });
+            setModal('record');
+        } }}/></div>}
+   {modal === 'record' && openRecord && <div className="modal-body"><div className="source-meta">{label(openRecord.record_type)}</div><h3>{openRecord.title || openRecord.statement || label(openRecord.kind || openRecord.role)}</h3>{openRecord.record_type === 'analysis' && openRecord.result ? <AnalysisResult raw={openRecord.result}/> : <RichText text={openRecord.content || openRecord.abstract || openRecord.quote || tr('No text supplied.')}/>}{openRecord.citation_audit && <CitationReport raw={openRecord.citation_audit}/>}<button className="text-button" onClick={() => setModal('retrieve')}>{tr("Back to project search")}</button></div>}
+   {modal === 'search' && <div className="modal-body"><p>{tr("Explore real bibliographic records. These searches return up to 20 records and do not establish a comprehensive systematic search.")}</p><form className="search-form" onSubmit={e => { e.preventDefault(); search(); }}><select aria-label={tr("Literature database")} value={provider} onChange={e => setProvider(e.target.value)}><option value="europepmc">{tr("Europe PMC \u00B7 abstracts & open access")}</option><option value="pubmed">{tr("PubMed")}</option><option value="crossref">{tr("Crossref")}</option></select><input dir="auto" value={query} onChange={e => setQuery(e.target.value)} required minLength={3} placeholder={tr("Question, keywords, or DOI")}/><button aria-label={tr("Search literature")} className="primary" disabled={searching || !boot?.user}>{searching ? <Loader2 size={17} className="spin"/> : <Search size={17}/>}</button></form>{!boot?.user && <a href={signinHref} target="_top">{tr("Sign in to search and save your results.")}</a>}<div className="search-results">{results.map((s, i) => <article key={i}><div className="source-meta">{s.origin} · {s.year || tr('Year unknown')}{s.access === 'open_access' ? ' · ' + tr('Open access') : ''}</div><h3 dir="auto"><a href={s.url} target="_blank" rel="noreferrer">{s.title}</a></h3><p dir="auto">{s.authors}</p>{s.abstract && <details><summary>{tr("Abstract supplied by source")}</summary><p dir="auto">{s.abstract}</p></details>}<button className="secondary" disabled={s.added} onClick={() => addSource(s)}>{s.added ? <Check size={13}/> : <Plus size={13}/>} {tr(s.added ? 'Saved' : 'Add to evidence')}</button></article>)}</div></div>}
+   {modal === 'connect' && <div className="modal-body"><div className="connection-state"><span className={'status-dot ' + (auth.connected ? 'online' : '')}/><strong>{tr(auth.connected ? 'Connected to ChatGPT' : boot?.local ? 'Ready for ChatGPT sign-in' : 'Hosted research workspace')}</strong></div>{!boot?.local ? <><p>{tr("Use the standalone, open-source local edition for the subscription AI connection and additional scientific engines. It opens this workspace interface on your computer. ChatGPT credentials never pass through the hosted website.")}</p><a className="primary" href="/downloads/evidarium-local.zip"><Download size={16}/>{" " + tr("Download local edition")}</a><p className="fine-print">{tr("Requires Node.js 24.19+ and Python 3.11+. Extract the ZIP, then run start-windows.ps1 or start.sh. Installation downloads the listed Python dependencies.")}</p><p>{tr("The hosted edition supports private projects, files, literature search, screening, native CSV analysis, meta-analysis, text extraction, notes, and exports. Hosted ChatGPT subscription inference is not enabled.")}</p>{!boot?.user && <a className="secondary" href={signinHref} target="_top">{tr("Continue with ChatGPT to save projects")}</a>}</> : <><p>{tr("Authorize this local open-source application to use your eligible ChatGPT allowance. Your OpenAI credentials are stored in your operating system credential store.")}</p>{!auth.connected ? <button className="primary" onClick={login}>{tr("Continue with ChatGPT") + " "}<ArrowUpRight size={15}/></button> : <><label>{tr("Model")}<select value={model} onChange={e => setModel(e.target.value)}>{models.map(m => <option key={m.slug} value={m.slug}>{m.display_name || m.slug}</option>)}</select></label><p className="fine-print">{tr("The exact selected model is used. No automatic fallback. Account availability and plan limits still apply.")}</p><LiveVerification model={model} onOpen={async (id) => { await loadProjects(); setPid(id); setModal(''); }}/><a target="_blank" rel="noreferrer" href="https://chatgpt.com/#settings/Usage">{tr("Manage ChatGPT usage \u2197")}</a><button className="text-button" onClick={async () => { try {
+            const result = await api('ai/logout', 'POST', {});
+            await refreshAuth();
+            if (result.warning)
+                flash(result.warning);
+        }
+        catch (e) {
+            flash(e);
+        } }}>{tr("Disconnect ChatGPT")}</button></>}{auth.pending && <p>{tr("Complete authorization in your system browser, then return here.")}</p>}{auth.account && <p className="fine-print">{tr("Connected account:") + " "}{auth.account}</p>}{auth.error && <p className="inline-error">{localizeMessage(auth.error, locale)}</p>}</>}<div className="divider"/><strong>{tr("Clear boundaries")}</strong><p>{tr("Model access, website sign-in, and local execution are separate permissions. Large files are stored separately from model context; unsupported extraction is reported explicitly.")}</p></div>}
+   {modal === 'protocol' && <form className="modal-body" onSubmit={async (e) => { e.preventDefault(); try {
+            const id = await ensureProject();
+            await api('projects/' + id, 'PATCH', { question, criteria, allow_search: allowSearch });
+            await refresh(id);
+            setModal('');
+        }
+        catch (e) {
+            flash(e);
+        } }}><label>{tr("Research question")}<textarea dir="auto" rows={3} value={question} onChange={e => setQuestion(e.target.value)}/></label><label>{tr("Eligibility criteria & planned methods")}<textarea dir="auto" rows={6} value={criteria} onChange={e => setCriteria(e.target.value)} placeholder={tr("Population, design, outcomes, exclusions, analysis plan\u2026")}/></label><label className="check-label"><input type="checkbox" checked={allowSearch} onChange={e => setAllowSearch(e.target.checked)}/>{" " + tr("Allow searches to send query text to public literature databases")}</label><p className="fine-print">{tr("Turning this off blocks manual and AI-initiated literature searches and remote article imports. Chat still sends selected project context to OpenAI when you use the connected model.")}</p><p className="fine-print">{tr("Changes are timestamped. Saving a plan does not constitute an external preregistration.")}</p><button className="primary">{tr("Save project brief")}</button></form>}
+   {modal === 'tool' && <form className="modal-body" onSubmit={createTask}>{!boot?.user ? <><p>{tr("Sign in to analyze files in your private project.")}</p><a className="primary" target="_top" href={signinHref}>{tr("Continue with ChatGPT")}</a></> : <><label>{tr("Analysis")}<select value={tool} onChange={e => { setTool(e.target.value); setToolArgs('{}'); setMetaIndependent(false); }}>{[['web_describe_csv', 'CSV statistics · no installation'], ['web_meta_analysis', 'Meta-analysis · native REML / Knapp–Hartung'], ['web_extract_text', 'Read UTF-8 text · no installation'], ['web_extract_pdf', 'Extract PDF text · no installation'], ...(boot.local ? [['describe_csv', 'CSV statistics · Python'], ['extract', 'Document extraction · Python / Docling'], ['meta_analysis', 'Meta-analysis · metafor (R)'], ['screen_rank', 'Screening priorities · ASReview'], ['symbolic_regression', 'Equation discovery · PySR'], ['mechanism_graph', 'Mechanistic claims · INDRA'], ['paperqa', 'Document questions · PaperQA2 / local model'], ['openscholar', 'Literature synthesis · OpenScholar / GPU'], ['biomni', 'Biomedical research · Biomni / isolated worker'], ['python', 'Custom Python · isolated Docker']] : [])].map(([k, n]) => <option value={k} key={k}>{tr(n)}</option>)}</select></label><label>{tr("Input file")}<select value={fileId} onChange={e => setFileId(e.target.value)} required={tool.startsWith('web_')}><option value="">{tr("Choose an input")}</option>{files.filter((f: Obj) => !['uploading', 'completing', 'deleting'].includes(f.status)).map((f: Obj) => <option value={f.id} key={f.id}>{f.name} · {formatBytes(f.size)}</option>)}</select></label>{tool === 'web_meta_analysis' && <><p>{tr("Upload a CSV with effect estimates and their sampling variances. Use the same effect scale and direction throughout; log ratios remain on the log scale.")}</p><label>{tr("Effect column")}<input dir="auto" value={metaEffect} onChange={e => setMetaEffect(e.target.value)} required maxLength={200}/></label><label>{tr("Sampling variance column")}<input dir="auto" value={metaVariance} onChange={e => setMetaVariance(e.target.value)} required maxLength={200}/></label><label>{tr("Study label column (optional)")}<input dir="auto" value={metaLabel} onChange={e => setMetaLabel(e.target.value)} maxLength={200}/></label><label className="check-label"><input type="checkbox" checked={metaIndependent} onChange={e => setMetaIndependent(e.target.checked)} required/>{" " + tr("I have checked that these estimates are independent and comparable.")}</label><p className="fine-print">{tr("3\u2013200 studies. Native JavaScript REML with an unmodified Knapp\u2013Hartung interval, numerically checked against metafor. This is not the R package and does not support dependent effects or moderators.")}</p></>}{tool === 'web_extract_pdf' && <p>{tr("Extracts text from PDF pages, up to 5 MiB, 50 pages and 200,000 characters. Scans need OCR; figures, tables, equations and reading order require review. Partial coverage is recorded.")}</p>}{tool === 'web_describe_csv' && <p>{tr("Calculates row counts, missing and nonnumeric counts, means, sample standard deviations, medians, minima and maxima. No model or package installation is required.")}</p>}{tool === 'web_extract_text' && <p>{tr("Reads UTF-8 TXT, Markdown, CSV, TSV, JSON, XML/JATS, RIS, BibTeX and FASTA text, retaining markup. This reader does not parse PDFs, Word files or scanned images.")}</p>}{tool.startsWith('web_') ? <p className="fine-print">{tr("Runs") + " "}{tr(boot.local ? 'locally' : 'on this website')}{" " + tr("after approval. Input limit:") + " "}{formatBytes(tool === 'web_extract_pdf' ? 5*1024**2 : 1024**2)}{tr(". CSV: 50,000 rows, 100 columns, 250,000 cells. Text extraction: 200,000 characters. Original files stay stored if analysis is unsupported.")}</p> : <><label>{tr("Parameters (JSON)")}<textarea dir="auto" className="mono" rows={5} value={toolArgs} onChange={e => setToolArgs(e.target.value)}/></label><p className="fine-print">{tr("This optional engine needs its documented local packages and resources.")}</p></>}<WebsiteCheck /><a className="text-button" href="/examples/bcg-effects.csv" download>{tr("Download published BCG example CSV")}</a><a href={guideHref} target="_blank">{tr("Methods, parameters & installation \u2197")}</a><button className="primary">{tr("Prepare task for approval") + " "}<ChevronRight size={14}/></button></>}</form>}
+   {modal === 'export' && <div className="modal-body"><button className="secondary" onClick={() => setModal('research')}>{tr("Writing, reference exports & screening ledger")}</button><p>{tr("Export project records, criteria, notes, conversations and current drafts. This is interchange, not a complete backup: original files, full revision histories and the independent-review ledger must be retained separately.")}</p><a className="primary" href={pid ? '/api/projects/' + pid + '/export' : '#'} download>{tr("Download project JSON") + " "}<Download size={15}/></a><a className="secondary" href={pid ? '/api/projects/' + pid + '/export?format=csv' : '#'} download>{tr("Download screening CSV")}</a><button className="secondary" onClick={() => setModal('screening')}>{tr("Independent review archive")}</button><button className="secondary" onClick={() => importRef.current?.click()}>{tr("Import an Evidarium project")}</button><p className="fine-print">{tr("Imported results keep an external-origin audit entry. Review third-party content rights before redistributing.")}</p></div>}
+   {modal === 'extraction' && <div className="modal-body"><p className="fine-print">{formatNumber(extraction?.characters || 0)}{" " + tr("characters \u00B7") + " "}{tr(extraction?.complete ? 'Extraction finished' : 'Partial extraction or method limitations')}</p>{[...(extraction?.warnings || []), ...(extraction?.limitations || [])].map((w: string, i: number) => <p key={i} className="inline-error">{localizeMessage(w, locale)}</p>)}{extraction?.segments?.map((x: Obj, i: number) => <section key={i}><h3>{localizeMessage(x.location, locale)}</h3><pre className="extracted-text" dir="auto">{x.text}</pre></section>)}</div>}
+   {modal === 'claim' && <form className="modal-body" onSubmit={async (e) => { e.preventDefault(); try {
+            const id = await ensureProject(), [type, evidenceId] = claimEvidence.split(':');
+            await api('projects/' + id + '/claims', 'POST', { statement: claimText, quote: claimQuote, stance: claimStance, location: claimLocation, ...(type === 'source' ? { source_id: evidenceId } : { file_id: evidenceId }) });
+            await refresh(id);
+            setModal('');
+            setPanel('claims');
+            setOpenPanel(true);
+            setClaimText('');
+            setClaimQuote('');
+        }
+        catch (e) {
+            flash(e);
+        } }}><label>{tr("Scientific claim")}<textarea dir="auto" rows={3} required value={claimText} onChange={e => setClaimText(e.target.value)}/></label><label>{tr("Evidence")}<select required value={claimEvidence} onChange={e => setClaimEvidence(e.target.value)}><option value="">{tr("Choose saved evidence")}</option>{sources.filter((x: Obj) => x.abstract).map((x: Obj) => <option key={x.id} value={'source:' + x.id}>{tr("Abstract:") + " "}{x.title}</option>)}{files.filter((x: Obj) => x.extracted && !['uploading', 'completing', 'deleting'].includes(x.status)).map((x: Obj) => <option key={x.id} value={'file:' + x.id}>{tr("Extracted file:") + " "}{x.name}</option>)}</select></label>{claimEvidence.startsWith('file:') && <label>{tr("Exact location")}<select value={claimLocation} onChange={e => setClaimLocation(e.target.value)} required disabled={!claimLocations.length}><option value="">{tr("Choose an extracted location")}</option>{claimLocations.map(location => <option key={location} value={location}>{localizeMessage(location, locale)}</option>)}</select></label>}<label>{tr("Relationship")}<select value={claimStance} onChange={e => setClaimStance(e.target.value)}><option value="supports">{tr("Supports")}</option><option value="contradicts">{tr("Contradicts")}</option><option value="context">{tr("Provides context")}</option></select></label><label>{tr("Exact quotation")}<textarea dir="auto" rows={5} required minLength={12} value={claimQuote} onChange={e => setClaimQuote(e.target.value)}/></label><p className="fine-print">{tr("The server must find this exact text in the selected abstract or extracted location. A text match confirms the passage exists; it does not establish the claim is true. Every new receipt starts unreviewed.")}</p><button className="primary" disabled={claimEvidence.startsWith('file:') && !claimLocation}>{tr("Check passage & save receipt")}</button></form>}
+   {modal === 'guide' && <div className="modal-body"><p>{tr("Evidarium keeps your research question, evidence, files, decisions, analysis runs, and writing in one project record.")}</p><ul className="guide-list"><li><strong>{tr("Find and assess.")}</strong>{" " + tr("Search actual literature databases and record stage-specific inclusion decisions.")}</li><li><strong>{tr("Run and inspect.")}</strong>{" " + tr("Run native CSV and meta-analysis on the website. The local edition adds the ChatGPT connection flow and optional engines.")}</li><li><strong>{tr("Preserve and export.")}</strong>{" " + tr("Retain originals, explicit parameters, execution records, and source links.")}</li></ul><p>{tr("Current release: an early working research workspace. It is not a validated autonomous scientist. The guide distinguishes implemented functions, optional engines, and unverified integrations.")}</p><a className="primary" href={guideHref} target="_blank">{tr("Read the technical guide") + " "}<ArrowUpRight size={15}/></a></div>}
   </section></div>}
- </div>
+ </div>;
 }
